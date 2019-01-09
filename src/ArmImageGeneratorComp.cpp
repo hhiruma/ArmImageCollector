@@ -11,16 +11,16 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include "ArmImageGenerator_061.h"
+#include "ArmImageGenerator.h"
 
 
 void MyModuleInit(RTC::Manager* manager)
 {
-  ArmImageGenerator_061Init(manager);
+  ArmImageGeneratorInit(manager);
   RTC::RtcBase* comp;
 
   // Create a component
-  comp = manager->createComponent("ArmImageGenerator_061");
+  comp = manager->createComponent("ArmImageGenerator");
 
   if (comp==NULL)
   {
