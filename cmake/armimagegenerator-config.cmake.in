@@ -1,0 +1,54 @@
+# ArmImageGenerator_061 CMake config file
+#
+# This file sets the following variables:
+# ArmImageGenerator_061_FOUND - Always TRUE.
+# ArmImageGenerator_061_INCLUDE_DIRS - Directories containing the ArmImageGenerator_061 include files.
+# ArmImageGenerator_061_IDL_DIRS - Directories containing the ArmImageGenerator_061 IDL files.
+# ArmImageGenerator_061_LIBRARIES - Libraries needed to use ArmImageGenerator_061.
+# ArmImageGenerator_061_DEFINITIONS - Compiler flags for ArmImageGenerator_061.
+# ArmImageGenerator_061_VERSION - The version of ArmImageGenerator_061 found.
+# ArmImageGenerator_061_VERSION_MAJOR - The major version of ArmImageGenerator_061 found.
+# ArmImageGenerator_061_VERSION_MINOR - The minor version of ArmImageGenerator_061 found.
+# ArmImageGenerator_061_VERSION_REVISION - The revision version of ArmImageGenerator_061 found.
+# ArmImageGenerator_061_VERSION_CANDIDATE - The candidate version of ArmImageGenerator_061 found.
+
+message(STATUS "Found ArmImageGenerator_061-@PROJECT_VERSION@")
+set(ArmImageGenerator_061_FOUND TRUE)
+
+find_package(<dependency> REQUIRED)
+
+#set(ArmImageGenerator_061_INCLUDE_DIRS
+#    "@CMAKE_INSTALL_PREFIX@/include/@PROJECT_NAME_LOWER@-@PROJECT_VERSION_MAJOR@"
+#    ${<dependency>_INCLUDE_DIRS}
+#    )
+#
+#set(ArmImageGenerator_061_IDL_DIRS
+#    "@CMAKE_INSTALL_PREFIX@/include/@PROJECT_NAME_LOWER@-@PROJECT_VERSION_MAJOR@/idl")
+set(ArmImageGenerator_061_INCLUDE_DIRS
+    "@CMAKE_INSTALL_PREFIX@/include/@CPACK_PACKAGE_FILE_NAME@"
+    ${<dependency>_INCLUDE_DIRS}
+    )
+set(ArmImageGenerator_061_IDL_DIRS
+    "@CMAKE_INSTALL_PREFIX@/include/@CPACK_PACKAGE_FILE_NAME@/idl")
+
+
+if(WIN32)
+    set(ArmImageGenerator_061_LIBRARIES
+        "@CMAKE_INSTALL_PREFIX@/@LIB_INSTALL_DIR@/@CMAKE_SHARED_LIBRARY_PREFIX@@PROJECT_NAME_LOWER@@CMAKE_STATIC_LIBRARY_SUFFIX@"
+        ${<dependency>_LIBRARIES}
+        )
+else(WIN32)
+    set(ArmImageGenerator_061_LIBRARIES
+        "@CMAKE_INSTALL_PREFIX@/@LIB_INSTALL_DIR@/@CMAKE_SHARED_LIBRARY_PREFIX@@PROJECT_NAME_LOWER@@CMAKE_SHARED_LIBRARY_SUFFIX@"
+        ${<dependency>_LIBRARIES}
+        )
+endif(WIN32)
+
+set(ArmImageGenerator_061_DEFINITIONS ${<dependency>_DEFINITIONS})
+
+set(ArmImageGenerator_061_VERSION @PROJECT_VERSION@)
+set(ArmImageGenerator_061_VERSION_MAJOR @PROJECT_VERSION_MAJOR@)
+set(ArmImageGenerator_061_VERSION_MINOR @PROJECT_VERSION_MINOR@)
+set(ArmImageGenerator_061_VERSION_REVISION @PROJECT_VERSION_REVISION@)
+set(ArmImageGenerator_061_VERSION_CANDIDATE @PROJECT_VERSION_CANDIDATE@)
+
