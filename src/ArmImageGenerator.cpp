@@ -300,6 +300,94 @@ double Uniform(void){
   return ((double)rand() + 1.0) / ((double)RAND_MAX + 2.0);
 }
 
+
+bool ArmImageGenerator::moveOrigin(void) {
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0.40;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = 0.30;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::rotateX(double theta) {
+  double c = cos(theta);
+  double s = sin(theta);
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = c; targetPos.carPos[1][2] = -s; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = s; targetPos.carPos[2][2] = c; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::rotateY(double theta) {
+  double c = cos(theta);
+  double s = sin(theta);
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = c; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = -s; targetPos.carPos[0][3] = 0;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = s; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = c; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::rotateZ(double theta) {
+  double c = cos(theta);
+  double s = sin(theta);
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = c; targetPos.carPos[0][1] = -s; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
+  targetPos.carPos[1][0] = s; targetPos.carPos[1][1] = c; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = x;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = y;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = z;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+
 RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 {
   std::cout << "Input Command (h for help):" << std::ends;
@@ -326,10 +414,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
   switch (c) {
   case '0':
     std::cout << "reset" << std::endl;
-    targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0.40;
-    targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
-    targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = 0.30;
-    m_manipMiddle->movePTPCartesianAbs(targetPos);
+    moveOrigin();
     break;
 
   case '1':
@@ -410,49 +495,35 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     break;
   case 'f':
     std::cout << "move right" << std::endl;
-    targetPos.carPos[1][3] = -0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, -0.01*n, 0)) return RTC::RTC_ERROR;    
     break;
   case 's':
     std::cout << "move left" << std::endl;
-    targetPos.carPos[1][3] = +0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, 0.01*n, 0)) return RTC::RTC_ERROR;    
     break;
   case 'e':
     std::cout << "move forward" << std::endl;
-    targetPos.carPos[0][3] = +0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0.01*n, 0, 0)) return RTC::RTC_ERROR;
     break;
   case 'c':
     std::cout << "move backward" << std::endl;
-    targetPos.carPos[0][3] = -0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
-    break;
-  case 'x':
-    std::cout << "rotateCW" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(n));
-    targetPos.carPos[0][1] = -sin(RADIANS(n));
-    targetPos.carPos[1][0] = sin(RADIANS(n));
-    targetPos.carPos[1][1] = cos(RADIANS(n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
-    break;
-  case 'v':
-    std::cout << "rotateCCW" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(-n));
-    targetPos.carPos[0][1] = -sin(RADIANS(-n));
-    targetPos.carPos[1][0] = sin(RADIANS(-n));
-    targetPos.carPos[1][1] = cos(RADIANS(-n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(-0.01*n, 0, 0)) return RTC::RTC_ERROR;
     break;
   case 'w':
     std::cout << "Up" << std::endl;
-    targetPos.carPos[2][3] = +0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, 0, 0.01*n)) return RTC::RTC_ERROR;
     break;
   case 'r':
     std::cout << "Down" << std::endl;
-    targetPos.carPos[2][3] = -0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, 0, -0.01*n)) return RTC::RTC_ERROR;
+    break;
+  case 'x':
+    std::cout << "rotateCW" << std::endl;
+    if (rotateZ(RADIANS(n))) return RTC::RTC_ERROR;
+    break;
+  case 'v':
+    std::cout << "rotateCCW" << std::endl;
+    if (rotateZ(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
   case 'y':
     std::cout << "Close Gripper" << std::endl;
@@ -462,7 +533,6 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     std::cout << "Open Gripper" << std::endl;
     m_manipMiddle->openGripper();
     break;
-
   case 'p':
     m_manipMiddle->setSpeedCartesian(10);
     break;
@@ -471,35 +541,19 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     break;
   case 'j':
     std::cout << "rotateJ" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(-n));
-    targetPos.carPos[0][2] = -sin(RADIANS(-n));
-    targetPos.carPos[2][0] = sin(RADIANS(-n));
-    targetPos.carPos[2][2] = cos(RADIANS(-n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateY(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
   case 'k':
     std::cout << "inverseJ" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(n));
-    targetPos.carPos[0][2] = -sin(RADIANS(n));
-    targetPos.carPos[2][0] = sin(RADIANS(n));
-    targetPos.carPos[2][2] = cos(RADIANS(n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateY(RADIANS(n))) return RTC::RTC_ERROR;
     break;
   case ',':
     std::cout << "rotate," << std::endl;
-    targetPos.carPos[1][1] = cos(RADIANS(-n));
-    targetPos.carPos[1][2] = -sin(RADIANS(-n));
-    targetPos.carPos[2][1] = sin(RADIANS(-n));
-    targetPos.carPos[2][2] = cos(RADIANS(-n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateX(RADIANS(-n))) return RTC::RTC_ERROR;    
     break;
   case '.':
     std::cout << "inverse," << std::endl;
-    targetPos.carPos[1][1] = cos(RADIANS(n));
-    targetPos.carPos[1][2] = -sin(RADIANS(n));
-    targetPos.carPos[2][1] = sin(RADIANS(n));
-    targetPos.carPos[2][2] = cos(RADIANS(n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateX(RADIANS(n))) return RTC::RTC_ERROR;    
     break;
   default:
     printf("Unknown Command %c\n", c);

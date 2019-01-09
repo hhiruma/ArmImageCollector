@@ -384,6 +384,13 @@ class ArmImageGenerator
 
      float  m_depth;
 
+
+  // 手先をデカルト座標系で移動
+  bool moveOrigin(); // 原点に移動
+  bool moveTranslate(double dx, double dy, double dz); // 並進移動．姿勢変化はなし
+  bool rotateX(double theta); // 回転移動．X軸回転．thetaは差分
+  bool rotateY(double theta); // 回転移動．Y軸回転．thetaは差分
+  bool rotateZ(double theta); // 回転移動．Z軸回転．thetaは差分
 };
 
 
