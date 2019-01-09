@@ -25,6 +25,9 @@
 
 #define RADIANS(x) (x)/180.0*M_PI
 
+
+// #define NO_ARM_CONNECTION
+
 // Module specification
 // <rtc-template block="module_spec">
 static const char* armimagegenerator_spec[] =
@@ -168,6 +171,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   coil::sleep(tv1);
   
   std::cout << "[ArmImageGenerator] Waiting Arm Component is Activated....." << std::endl;
+#ifndef NO_ARM_CONNECTION
   while (true) {
     //int ok_count = 0;
     const RTC::PortProfile& pp = m_manipCommonPort.getPortProfile();
@@ -190,6 +194,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
       }
     }
   }
+
   
 
   JARA_ARM::RETURN_ID_var ret = m_manipCommon->servoON();
@@ -204,7 +209,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
     std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
   }
-  
+#endif  
   m_jointPos->length(6);
   m_jointPos[0] = 0;
   m_jointPos[1] = M_PI/4;
@@ -279,20 +284,22 @@ RTC::ReturnCode_t ArmImageGenerator::onDeactivated(RTC::UniqueId ec_id)
   m_jointPos[2] = M_PI / 2;
   m_jointPos[4] = M_PI / 2;
 
+#ifndef NO_ARM_CONNECTION
   JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPJointAbs(m_jointPos);
   if (ret->id != JARA_ARM::OK) {
     std::cout << "ERROR in ServoON" << std::endl;
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
     std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
   }
-
+  m_manipCommon->servoOFF();
+#endif
 
   m_JointLog.close();
 
   coil::TimeValue tv(3.0);
   coil::sleep(tv);
 
-  m_manipCommon->servoOFF();
+
   return RTC::RTC_OK;
 }
 
@@ -480,18 +487,24 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 
   case 'l':
     std::cout << "getFeedbackPosCartesian" << std::endl;
+#ifndef NO_ARM_CONNECTION
     m_manipMiddle->getFeedbackPosCartesian(pos);
     printf("carPos: %4.4f %4.4f %4.4f %4.4f\n", pos->carPos[0][0], pos->carPos[0][1], pos->carPos[0][2], pos->carPos[0][3]);
     printf("        %4.4f %4.4f %4.4f %4.4f\n", pos->carPos[1][0], pos->carPos[1][1], pos->carPos[1][2], pos->carPos[1][3]);
     printf("        %4.4f %4.4f %4.4f %4.4f\n", pos->carPos[2][0], pos->carPos[2][1], pos->carPos[2][2], pos->carPos[2][3]);
+#endif
     break;
   case 'o':
     std::cout << "servoON" << std::endl;
+#ifndef NO_ARM_CONNECTION
     m_manipCommon->servoON();
+#endif
     break;
   case 'i':
     std::cout << "servoOFF" << std::endl;
+#ifndef NO_ARM_CONNECTION
     m_manipCommon->servoOFF();
+#endif
     break;
   case 'f':
     std::cout << "move right" << std::endl;

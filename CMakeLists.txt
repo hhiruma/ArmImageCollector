@@ -23,6 +23,7 @@ ADD_CUSTOM_TARGET (uninstall "${CMAKE_COMMAND}" -P
 
 #option(BUILD_EXAMPLES "Build and install examples" OFF)
 option(BUILD_DOCUMENTATION "Build the documentation" ON)
+option(NO_ARM_CONNECTION "Runnable without Arm connection" OFF)
 #option(BUILD_TESTS "Build the tests" OFF)
 #option(BUILD_TOOLS "Build the tools" OFF)
 option(BUILD_IDL "Build and install idl" ON)
