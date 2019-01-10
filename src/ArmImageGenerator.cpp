@@ -413,7 +413,8 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
     << "yaw=" << poses.orientation.y << ", " 
     << "pitch=" << poses.orientation.p << ")" << std::endl;
 
-
+  // ここでロールピッチヨー表現の姿勢を変換行列にして
+  // moveCartesianAbsに送る．
   
   m_BehaviorLog << "moveAbsWithPose3D() ended." << std::endl;  
   return true;
@@ -423,6 +424,25 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   m_BehaviorLog << "generatePoses()" << std::endl;  
   std::vector<RTC::Pose3D> poses;
 
+  // TODO: ここで撮影位置姿勢を生成し，posesに格納して返す
+  // poses.position.x
+  // poses.position.y
+  // poses.position.z
+  // poses.orientation.r ロール
+  // poses.orientation.y ヨー
+  // poses.orientation.p ピッチ
+  
+  for(int i = 0;i < 3;i++) {
+    RTC::Pose3D pose;
+    pose.position.x = i*1;
+    pose.position.y = 0;
+    pose.position.z = 0;
+    pose.orientation.r = 0;
+    pose.orientation.p = 0;
+    pose.orientation.y = 0;
+    poses.push_back(pose);
+  }
+
   m_BehaviorLog << "generatePoses() ended." << std::endl;
   return poses;
 }
@@ -430,17 +450,50 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
 RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
   m_BehaviorLog << "onMoveAutomatic()" << std::endl;
 
+  // ここで目標位置姿勢をリストにして受け取る
   std::vector<RTC::Pose3D> poseArray = generatePoses();
 
+  // ここで繰り返し移動して撮影する
+  int count = 0;
   for (auto pose : poseArray) {
     moveAbsWithPose3D(pose);
+    saveLog(count++, pose);
   }
 
   m_BehaviorLog << "onMoveAutomatic() ended." << std::endl;
   return RTC::RTC_OK;
 }
 
+void ArmImageGenerator::saveLog(int count, const RTC::Pose3D& targetPose) {
+  /// TODO: ここでデータを保存します．
+  m_BehaviorLog << "saveLog(" << count << ")" << std::endl;
+  std::ostringstream ioss;
+  std::string ext = ".png"; // 拡張子
+  ioss << m_logDir << "/" << "image" << std::setw(4) << std::setfill('0') << count << ext;
+  std::string imageFilename = ioss.str();
 
+  std::ostringstream poss;
+  ext = ".csv";
+  poss << m_logDir << "/" << "pose" << std::setw(4) << std::setfill('0') << count << ext;
+  std::string poseFilename = poss.str();
+
+
+  /// 画像ファイルの保存．今はダミー 1/10
+  std::ofstream imFile(imageFilename);
+  imFile.close();
+
+  /// ポーズファイル．今はターゲットポーズを保存するけど，現在地を保存したいところ
+  std::ofstream poseFile(poseFilename);
+  poseFile << targetPose.position.x << ","
+	   << targetPose.position.y << ","
+	   << targetPose.position.z << ","
+	   << targetPose.orientation.r << ","
+	   << targetPose.orientation.p << ","
+	   << targetPose.orientation.y << std::endl;
+  poseFile.close();
+  
+  m_BehaviorLog << "saveLog() ended." << std::endl;
+}
 
 RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 {
@@ -455,7 +508,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
   char c;
   std::cin >> c;
   int n = 0;
-  if (c != 'a') { // 'a' command is added for automatic behavior.
+  if (c != 'a') { // 'a' コマンドは自動動作用なのでnの値はいらない
     std::cout << "Input Amount:" << std::ends;
     std::string tmp;
     std::cin >> tmp;
@@ -470,7 +523,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
   JARA_ARM::RETURN_ID_var ret;
 
   switch (c) {
-  case 'a' :
+  case 'a' : // a ならば自動動作をしてonExecuteを返す
     std::cout << "moveAutomatic" << std::endl;
     return onMoveAutomatic();
     break;
