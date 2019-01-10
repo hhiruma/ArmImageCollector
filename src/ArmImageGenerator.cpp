@@ -272,6 +272,9 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   m_JointLog << "x, y, theta, ImageFilename, DepthImgFilename" << std::endl;
   
   m_DepthLog << "DepthData(480*360)" << std::endl;
+
+  std::string b_filename = m_logDir + "/behavior.csv";
+  m_BehaviorLog.open(b_filename.c_str(), std::ios::out);//, std::ofstream::out);
   
   return RTC::RTC_OK;
 }
@@ -293,8 +296,8 @@ RTC::ReturnCode_t ArmImageGenerator::onDeactivated(RTC::UniqueId ec_id)
   }
   m_manipCommon->servoOFF();
 #endif
-
   m_JointLog.close();
+  m_BehaviorLog.close();
 
   coil::TimeValue tv(3.0);
   coil::sleep(tv);
@@ -309,6 +312,7 @@ double Uniform(void){
 
 
 bool ArmImageGenerator::moveOrigin(void) {
+  m_BehaviorLog << "moveOrigin" << std::endl;
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
   targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0.40;
@@ -325,6 +329,7 @@ bool ArmImageGenerator::moveOrigin(void) {
 }
 
 bool ArmImageGenerator::rotateX(double theta) {
+  m_BehaviorLog << "rotateX(" << theta << ")" << std::endl;
   double c = cos(theta);
   double s = sin(theta);
   JARA_ARM::CarPosWithElbow targetPos;
@@ -343,6 +348,7 @@ bool ArmImageGenerator::rotateX(double theta) {
 }
 
 bool ArmImageGenerator::rotateY(double theta) {
+  m_BehaviorLog << "rotateY(" << theta << ")" << std::endl;
   double c = cos(theta);
   double s = sin(theta);
   JARA_ARM::CarPosWithElbow targetPos;
@@ -361,6 +367,7 @@ bool ArmImageGenerator::rotateY(double theta) {
 }
 
 bool ArmImageGenerator::rotateZ(double theta) {
+  m_BehaviorLog << "rotateZ(" << theta << ")" << std::endl;
   double c = cos(theta);
   double s = sin(theta);
   JARA_ARM::CarPosWithElbow targetPos;
@@ -379,6 +386,7 @@ bool ArmImageGenerator::rotateZ(double theta) {
 }
 
 bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
+  m_BehaviorLog << "moveTranslate(" << dx << ", " << dy << ", " << dz << ")" << std::endl;
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
   targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = dx;
@@ -394,24 +402,38 @@ bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
   return false;
 }
 
+RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
+  m_BehaviorLog << "onMoveAutomatic()" << std::endl;
+
+
+
+  m_BehaviorLog << "onMoveAutomatic() ended." << std::endl;
+  return RTC::RTC_OK;
+}
+
+
 
 RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 {
-  std::cout << "Input Command (h for help):" << std::ends;
-  char c;
-  std::cin >> c;
-  std::cout << "Input Amount:" << std::ends;
-  std::string tmp;
-  std::cin >> tmp;
-  int n = atoi(tmp.c_str());
-  rewind(stdin);
-  fflush(stdin);
+
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
   targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
   targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
   targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
 
+  std::cout << "Input Command (h for help):" << std::ends;
+  char c;
+  std::cin >> c;
+  int n = 0;
+  if (c != 'a') { // 'a' command is added for automatic behavior.
+    std::cout << "Input Amount:" << std::ends;
+    std::string tmp;
+    std::cin >> tmp;
+    n = atoi(tmp.c_str());
+  }
+  rewind(stdin);
+  fflush(stdin);
 
   JARA_ARM::CarPosWithElbow_var pos = new JARA_ARM::CarPosWithElbow();//(new JARA_ARM::CarPosWithElbow_var());
 
@@ -419,6 +441,10 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
   JARA_ARM::RETURN_ID_var ret;
 
   switch (c) {
+  case 'a' :
+    std::cout << "moveAutomatic" << std::endl;
+    return onMoveAutomatic();
+    break;
   case '0':
     std::cout << "reset" << std::endl;
     moveOrigin();

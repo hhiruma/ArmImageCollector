@@ -379,6 +379,8 @@ class ArmImageGenerator
 	 std::ofstream m_JointLog;
 
   	 std::ofstream m_DepthLog;
+
+  std::ofstream m_BehaviorLog;
   
 	 std::string m_logDir;
 
@@ -391,6 +393,9 @@ class ArmImageGenerator
   bool rotateX(double theta); // 回転移動．X軸回転．thetaは差分
   bool rotateY(double theta); // 回転移動．Y軸回転．thetaは差分
   bool rotateZ(double theta); // 回転移動．Z軸回転．thetaは差分
+
+
+  RTC::ReturnCode_t onMoveAutomatic();
 };
 
 
