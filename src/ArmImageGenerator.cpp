@@ -402,10 +402,39 @@ bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
   return false;
 }
 
+
+bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
+  m_BehaviorLog 
+    << "moveAbsWithPose3D(" 
+    << "x=" << poses.position.x << ", " 
+    << "y=" << poses.position.y << ", " 
+    << "z=" << poses.position.z << ", "
+    << "roll=" << poses.orientation.r << ", "
+    << "yaw=" << poses.orientation.y << ", " 
+    << "pitch=" << poses.orientation.p << ")" << std::endl;
+
+
+  
+  m_BehaviorLog << "moveAbsWithPose3D() ended." << std::endl;  
+  return true;
+}
+
+std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
+  m_BehaviorLog << "generatePoses()" << std::endl;  
+  std::vector<RTC::Pose3D> poses;
+
+  m_BehaviorLog << "generatePoses() ended." << std::endl;
+  return poses;
+}
+
 RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
   m_BehaviorLog << "onMoveAutomatic()" << std::endl;
 
+  std::vector<RTC::Pose3D> poseArray = generatePoses();
 
+  for (auto pose : poseArray) {
+    moveAbsWithPose3D(pose);
+  }
 
   m_BehaviorLog << "onMoveAutomatic() ended." << std::endl;
   return RTC::RTC_OK;

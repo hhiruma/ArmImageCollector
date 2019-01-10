@@ -396,6 +396,8 @@ class ArmImageGenerator
 
 
   RTC::ReturnCode_t onMoveAutomatic();
+  bool moveAbsWithPose3D(const RTC::Pose3D& pose);
+  std::vector<RTC::Pose3D> generatePoses();
 };
 
 
