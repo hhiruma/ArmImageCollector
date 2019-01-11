@@ -25,6 +25,9 @@
 
 #define RADIANS(x) (x)/180.0*M_PI
 
+
+// #define NO_ARM_CONNECTION
+
 // Module specification
 // <rtc-template block="module_spec">
 static const char* armimagegenerator_spec[] =
@@ -168,6 +171,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   coil::sleep(tv1);
   
   std::cout << "[ArmImageGenerator] Waiting Arm Component is Activated....." << std::endl;
+#ifndef NO_ARM_CONNECTION
   while (true) {
     //int ok_count = 0;
     const RTC::PortProfile& pp = m_manipCommonPort.getPortProfile();
@@ -190,6 +194,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
       }
     }
   }
+
   
 
   JARA_ARM::RETURN_ID_var ret = m_manipCommon->servoON();
@@ -204,7 +209,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
     std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
   }
-  
+#endif  
   m_jointPos->length(6);
   m_jointPos[0] = 0;
   m_jointPos[1] = M_PI/4;
@@ -267,6 +272,9 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   m_JointLog << "x, y, theta, ImageFilename, DepthImgFilename" << std::endl;
   
   m_DepthLog << "DepthData(480*360)" << std::endl;
+
+  std::string b_filename = m_logDir + "/behavior.csv";
+  m_BehaviorLog.open(b_filename.c_str(), std::ios::out);//, std::ofstream::out);
   
   return RTC::RTC_OK;
 }
@@ -279,20 +287,22 @@ RTC::ReturnCode_t ArmImageGenerator::onDeactivated(RTC::UniqueId ec_id)
   m_jointPos[2] = M_PI / 2;
   m_jointPos[4] = M_PI / 2;
 
+#ifndef NO_ARM_CONNECTION
   JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPJointAbs(m_jointPos);
   if (ret->id != JARA_ARM::OK) {
     std::cout << "ERROR in ServoON" << std::endl;
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
     std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
   }
-
-
+  m_manipCommon->servoOFF();
+#endif
   m_JointLog.close();
+  m_BehaviorLog.close();
 
   coil::TimeValue tv(3.0);
   coil::sleep(tv);
 
-  m_manipCommon->servoOFF();
+
   return RTC::RTC_OK;
 }
 
@@ -300,23 +310,212 @@ double Uniform(void){
   return ((double)rand() + 1.0) / ((double)RAND_MAX + 2.0);
 }
 
+
+bool ArmImageGenerator::moveOrigin(void) {
+  m_BehaviorLog << "moveOrigin" << std::endl;
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0.40;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = 0.30;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::rotateX(double theta) {
+  m_BehaviorLog << "rotateX(" << theta << ")" << std::endl;
+  double c = cos(theta);
+  double s = sin(theta);
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = c; targetPos.carPos[1][2] = -s; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = s; targetPos.carPos[2][2] = c; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::rotateY(double theta) {
+  m_BehaviorLog << "rotateY(" << theta << ")" << std::endl;
+  double c = cos(theta);
+  double s = sin(theta);
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = c; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = -s; targetPos.carPos[0][3] = 0;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = s; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = c; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::rotateZ(double theta) {
+  m_BehaviorLog << "rotateZ(" << theta << ")" << std::endl;
+  double c = cos(theta);
+  double s = sin(theta);
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = c; targetPos.carPos[0][1] = -s; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
+  targetPos.carPos[1][0] = s; targetPos.carPos[1][1] = c; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
+  m_BehaviorLog << "moveTranslate(" << dx << ", " << dy << ", " << dz << ")" << std::endl;
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = dx;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = dy;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = dz;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
+
+bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
+  m_BehaviorLog 
+    << "moveAbsWithPose3D(" 
+    << "x=" << poses.position.x << ", " 
+    << "y=" << poses.position.y << ", " 
+    << "z=" << poses.position.z << ", "
+    << "roll=" << poses.orientation.r << ", "
+    << "yaw=" << poses.orientation.y << ", " 
+    << "pitch=" << poses.orientation.p << ")" << std::endl;
+
+  // ここでロールピッチヨー表現の姿勢を変換行列にして
+  // moveCartesianAbsに送る．
+  
+  m_BehaviorLog << "moveAbsWithPose3D() ended." << std::endl;  
+  return true;
+}
+
+std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
+  m_BehaviorLog << "generatePoses()" << std::endl;  
+  std::vector<RTC::Pose3D> poses;
+
+  // TODO: ここで撮影位置姿勢を生成し，posesに格納して返す
+  // poses.position.x
+  // poses.position.y
+  // poses.position.z
+  // poses.orientation.r ロール
+  // poses.orientation.y ヨー
+  // poses.orientation.p ピッチ
+  
+  for(int i = 0;i < 3;i++) {
+    RTC::Pose3D pose;
+    pose.position.x = i*1;
+    pose.position.y = 0;
+    pose.position.z = 0;
+    pose.orientation.r = 0;
+    pose.orientation.p = 0;
+    pose.orientation.y = 0;
+    poses.push_back(pose);
+  }
+
+  m_BehaviorLog << "generatePoses() ended." << std::endl;
+  return poses;
+}
+
+RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
+  m_BehaviorLog << "onMoveAutomatic()" << std::endl;
+
+  // ここで目標位置姿勢をリストにして受け取る
+  std::vector<RTC::Pose3D> poseArray = generatePoses();
+
+  // ここで繰り返し移動して撮影する
+  int count = 0;
+  for (auto pose : poseArray) {
+    moveAbsWithPose3D(pose);
+    saveLog(count++, pose);
+  }
+
+  m_BehaviorLog << "onMoveAutomatic() ended." << std::endl;
+  return RTC::RTC_OK;
+}
+
+void ArmImageGenerator::saveLog(int count, const RTC::Pose3D& targetPose) {
+  /// TODO: ここでデータを保存します．
+  m_BehaviorLog << "saveLog(" << count << ")" << std::endl;
+  std::ostringstream ioss;
+  std::string ext = ".png"; // 拡張子
+  ioss << m_logDir << "/" << "image" << std::setw(4) << std::setfill('0') << count << ext;
+  std::string imageFilename = ioss.str();
+
+  std::ostringstream poss;
+  ext = ".csv";
+  poss << m_logDir << "/" << "pose" << std::setw(4) << std::setfill('0') << count << ext;
+  std::string poseFilename = poss.str();
+
+
+  /// 画像ファイルの保存．今はダミー 1/10
+  std::ofstream imFile(imageFilename);
+  imFile.close();
+
+  /// ポーズファイル．今はターゲットポーズを保存するけど，現在地を保存したいところ
+  std::ofstream poseFile(poseFilename);
+  poseFile << targetPose.position.x << ","
+	   << targetPose.position.y << ","
+	   << targetPose.position.z << ","
+	   << targetPose.orientation.r << ","
+	   << targetPose.orientation.p << ","
+	   << targetPose.orientation.y << std::endl;
+  poseFile.close();
+  
+  m_BehaviorLog << "saveLog() ended." << std::endl;
+}
+
 RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 {
-  std::cout << "Input Command (h for help):" << std::ends;
-  char c;
-  std::cin >> c;
-  std::cout << "Input Amount:" << std::ends;
-  std::string tmp;
-  std::cin >> tmp;
-  int n = atoi(tmp.c_str());
-  rewind(stdin);
-  fflush(stdin);
+
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
   targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
   targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
   targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
 
+  std::cout << "Input Command (h for help):" << std::ends;
+  char c;
+  std::cin >> c;
+  int n = 0;
+  if (c != 'a') { // 'a' コマンドは自動動作用なのでnの値はいらない
+    std::cout << "Input Amount:" << std::ends;
+    std::string tmp;
+    std::cin >> tmp;
+    n = atoi(tmp.c_str());
+  }
+  rewind(stdin);
+  fflush(stdin);
 
   JARA_ARM::CarPosWithElbow_var pos = new JARA_ARM::CarPosWithElbow();//(new JARA_ARM::CarPosWithElbow_var());
 
@@ -324,12 +523,13 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
   JARA_ARM::RETURN_ID_var ret;
 
   switch (c) {
+  case 'a' : // a ならば自動動作をしてonExecuteを返す
+    std::cout << "moveAutomatic" << std::endl;
+    return onMoveAutomatic();
+    break;
   case '0':
     std::cout << "reset" << std::endl;
-    targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0.40;
-    targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
-    targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = 0.30;
-    m_manipMiddle->movePTPCartesianAbs(targetPos);
+    moveOrigin();
     break;
 
   case '1':
@@ -395,64 +595,56 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 
   case 'l':
     std::cout << "getFeedbackPosCartesian" << std::endl;
+#ifndef NO_ARM_CONNECTION
     m_manipMiddle->getFeedbackPosCartesian(pos);
     printf("carPos: %4.4f %4.4f %4.4f %4.4f\n", pos->carPos[0][0], pos->carPos[0][1], pos->carPos[0][2], pos->carPos[0][3]);
     printf("        %4.4f %4.4f %4.4f %4.4f\n", pos->carPos[1][0], pos->carPos[1][1], pos->carPos[1][2], pos->carPos[1][3]);
     printf("        %4.4f %4.4f %4.4f %4.4f\n", pos->carPos[2][0], pos->carPos[2][1], pos->carPos[2][2], pos->carPos[2][3]);
+#endif
     break;
   case 'o':
     std::cout << "servoON" << std::endl;
+#ifndef NO_ARM_CONNECTION
     m_manipCommon->servoON();
+#endif
     break;
   case 'i':
     std::cout << "servoOFF" << std::endl;
+#ifndef NO_ARM_CONNECTION
     m_manipCommon->servoOFF();
+#endif
     break;
   case 'f':
     std::cout << "move right" << std::endl;
-    targetPos.carPos[1][3] = -0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, -0.01*n, 0)) return RTC::RTC_ERROR;    
     break;
   case 's':
     std::cout << "move left" << std::endl;
-    targetPos.carPos[1][3] = +0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, 0.01*n, 0)) return RTC::RTC_ERROR;    
     break;
   case 'e':
     std::cout << "move forward" << std::endl;
-    targetPos.carPos[0][3] = +0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0.01*n, 0, 0)) return RTC::RTC_ERROR;
     break;
   case 'c':
     std::cout << "move backward" << std::endl;
-    targetPos.carPos[0][3] = -0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
-    break;
-  case 'x':
-    std::cout << "rotateCW" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(n));
-    targetPos.carPos[0][1] = -sin(RADIANS(n));
-    targetPos.carPos[1][0] = sin(RADIANS(n));
-    targetPos.carPos[1][1] = cos(RADIANS(n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
-    break;
-  case 'v':
-    std::cout << "rotateCCW" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(-n));
-    targetPos.carPos[0][1] = -sin(RADIANS(-n));
-    targetPos.carPos[1][0] = sin(RADIANS(-n));
-    targetPos.carPos[1][1] = cos(RADIANS(-n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(-0.01*n, 0, 0)) return RTC::RTC_ERROR;
     break;
   case 'w':
     std::cout << "Up" << std::endl;
-    targetPos.carPos[2][3] = +0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, 0, 0.01*n)) return RTC::RTC_ERROR;
     break;
   case 'r':
     std::cout << "Down" << std::endl;
-    targetPos.carPos[2][3] = -0.01*n;
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (moveTranslate(0, 0, -0.01*n)) return RTC::RTC_ERROR;
+    break;
+  case 'x':
+    std::cout << "rotateCW" << std::endl;
+    if (rotateZ(RADIANS(n))) return RTC::RTC_ERROR;
+    break;
+  case 'v':
+    std::cout << "rotateCCW" << std::endl;
+    if (rotateZ(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
   case 'y':
     std::cout << "Close Gripper" << std::endl;
@@ -462,7 +654,6 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     std::cout << "Open Gripper" << std::endl;
     m_manipMiddle->openGripper();
     break;
-
   case 'p':
     m_manipMiddle->setSpeedCartesian(10);
     break;
@@ -471,35 +662,19 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     break;
   case 'j':
     std::cout << "rotateJ" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(-n));
-    targetPos.carPos[0][2] = -sin(RADIANS(-n));
-    targetPos.carPos[2][0] = sin(RADIANS(-n));
-    targetPos.carPos[2][2] = cos(RADIANS(-n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateY(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
   case 'k':
     std::cout << "inverseJ" << std::endl;
-    targetPos.carPos[0][0] = cos(RADIANS(n));
-    targetPos.carPos[0][2] = -sin(RADIANS(n));
-    targetPos.carPos[2][0] = sin(RADIANS(n));
-    targetPos.carPos[2][2] = cos(RADIANS(n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateY(RADIANS(n))) return RTC::RTC_ERROR;
     break;
   case ',':
     std::cout << "rotate," << std::endl;
-    targetPos.carPos[1][1] = cos(RADIANS(-n));
-    targetPos.carPos[1][2] = -sin(RADIANS(-n));
-    targetPos.carPos[2][1] = sin(RADIANS(-n));
-    targetPos.carPos[2][2] = cos(RADIANS(-n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateX(RADIANS(-n))) return RTC::RTC_ERROR;    
     break;
   case '.':
     std::cout << "inverse," << std::endl;
-    targetPos.carPos[1][1] = cos(RADIANS(n));
-    targetPos.carPos[1][2] = -sin(RADIANS(n));
-    targetPos.carPos[2][1] = sin(RADIANS(n));
-    targetPos.carPos[2][2] = cos(RADIANS(n));
-    m_manipMiddle->movePTPCartesianRel(targetPos);
+    if (rotateX(RADIANS(n))) return RTC::RTC_ERROR;    
     break;
   default:
     printf("Unknown Command %c\n", c);
