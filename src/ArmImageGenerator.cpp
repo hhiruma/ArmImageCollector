@@ -235,7 +235,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   time_t now = std::time(NULL);
   struct tm* localNow = std::localtime(&now);
   std::ostringstream ss;
-  ss << "log"
+  ss << "logs/log"
      << 1900 + localNow->tm_year
      << std::setw(2) << std::setfill('0') << localNow->tm_mon + 1
      << std::setw(2) << std::setfill('0') << localNow->tm_mday
@@ -469,12 +469,12 @@ void ArmImageGenerator::saveLog(int count, const RTC::Pose3D& targetPose) {
   m_BehaviorLog << "saveLog(" << count << ")" << std::endl;
   std::ostringstream ioss;
   std::string ext = ".png"; // Šg’£Žq
-  ioss << m_logDir << "/" << "image" << std::setw(4) << std::setfill('0') << count << ext;
+  ioss << m_logDir << "/images/" << "image" << std::setw(4) << std::setfill('0') << count << ext;
   std::string imageFilename = ioss.str();
 
   std::ostringstream poss;
   ext = ".csv";
-  poss << m_logDir << "/" << "pose" << std::setw(4) << std::setfill('0') << count << ext;
+  poss << m_logDir << "/poses/" << "pose" << std::setw(4) << std::setfill('0') << count << ext;
   std::string poseFilename = poss.str();
 
 
