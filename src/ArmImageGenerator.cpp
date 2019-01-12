@@ -169,7 +169,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   std::cout << "[ArmImageGenerator] Initializing Arm and Parameters" << std::endl;
   coil::TimeValue tv1(5.0);
   coil::sleep(tv1);
-  
+
   std::cout << "[ArmImageGenerator] Waiting Arm Component is Activated....." << std::endl;
 #ifndef NO_ARM_CONNECTION
   while (true) {
@@ -195,7 +195,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
     }
   }
 
-  
+
 
   JARA_ARM::RETURN_ID_var ret = m_manipCommon->servoON();
   if (ret->id != JARA_ARM::OK) {
@@ -209,7 +209,7 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
     std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
   }
-#endif  
+#endif
   m_jointPos->length(6);
   m_jointPos[0] = 0;
   m_jointPos[1] = M_PI/4;
@@ -217,21 +217,21 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   m_jointPos[3] = 0;
   m_jointPos[4] = M_PI/2;
   m_jointPos[5] = 0;
-  
+
   //m_manipMiddle->movePTPJointAbs(m_jointPos);
-  
-  
+
+
   coil::TimeValue tv(3.0);
   coil::sleep(tv);
-  
-  
+
+
   m_j0counter = m_j1counter = 0;
-  
+
   m_sleepTime = coil::TimeValue(m_wait_interval);
   std::cout << "[ArmImageGenerator] Wait " << m_sleepTime.sec() << "[sec], " << m_sleepTime.usec() << "[usec]" << std::endl;
-  
+
   std::cout << "[ArmImageGenerator] Ready." << std::endl;
-  
+
   time_t now = std::time(NULL);
   struct tm* localNow = std::localtime(&now);
   std::ostringstream ss;
@@ -242,14 +242,14 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
      << std::setw(2) << std::setfill('0') << localNow->tm_hour
      << std::setw(2) << std::setfill('0') << localNow->tm_min
      << std::setw(2) << std::setfill('0') << localNow->tm_sec;
-  
+
   m_logDir = ss.str();
 #ifdef WIN32
   _mkdir(m_logDir.c_str());
 #else
   mkdir(m_logDir.c_str(), 0777);
 #endif
-  
+
 
   std::ofstream configFile;
   configFile.open(m_logDir + "/config.yaml", std::ofstream::out);
@@ -261,21 +261,21 @@ RTC::ReturnCode_t ArmImageGenerator::onActivated(RTC::UniqueId ec_id)
   configFile << "j1step: " << m_j1step << std::endl;
   configFile << "wait_interval: " << m_wait_interval << std::endl;
   configFile.close();
-	
-	
+
+
   std::string filename = m_logDir + "/joints.csv";
   m_JointLog.open(filename.c_str(), std::ios::out);//, std::ofstream::out);
-    
+
   std::string name = m_logDir + "/depth.csv";
   m_DepthLog.open(name.c_str(), std::ios::out);
-  
+
   m_JointLog << "x, y, theta, ImageFilename, DepthImgFilename" << std::endl;
-  
+
   m_DepthLog << "DepthData(480*360)" << std::endl;
 
   std::string b_filename = m_logDir + "/behavior.csv";
   m_BehaviorLog.open(b_filename.c_str(), std::ios::out);//, std::ofstream::out);
-  
+
   return RTC::RTC_OK;
 }
 
@@ -404,24 +404,24 @@ bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
 
 
 bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
-  m_BehaviorLog 
-    << "moveAbsWithPose3D(" 
-    << "x=" << poses.position.x << ", " 
-    << "y=" << poses.position.y << ", " 
+  m_BehaviorLog
+    << "moveAbsWithPose3D("
+    << "x=" << poses.position.x << ", "
+    << "y=" << poses.position.y << ", "
     << "z=" << poses.position.z << ", "
     << "roll=" << poses.orientation.r << ", "
-    << "yaw=" << poses.orientation.y << ", " 
+    << "yaw=" << poses.orientation.y << ", "
     << "pitch=" << poses.orientation.p << ")" << std::endl;
 
   // ここでロールピッチヨー表現の姿勢を変換行列にして
   // moveCartesianAbsに送る．
-  
-  m_BehaviorLog << "moveAbsWithPose3D() ended." << std::endl;  
+
+  m_BehaviorLog << "moveAbsWithPose3D() ended." << std::endl;
   return true;
 }
 
 std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
-  m_BehaviorLog << "generatePoses()" << std::endl;  
+  m_BehaviorLog << "generatePoses()" << std::endl;
   std::vector<RTC::Pose3D> poses;
 
   // TODO: ここで撮影位置姿勢を生成し，posesに格納して返す
@@ -431,15 +431,71 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   // poses.orientation.r ロール
   // poses.orientation.y ヨー
   // poses.orientation.p ピッチ
-  
-  for(int i = 0;i < 3;i++) {
+
+
+  //first layer
+  for(int th = 180; th<=540; th+=90){
     RTC::Pose3D pose;
-    pose.position.x = i*1;
-    pose.position.y = 0;
-    pose.position.z = 0;
-    pose.orientation.r = 0;
+    pose.position.x = 0.01 * (20 + 3.38 * sin((th-180)/2));
+    pose.position.y = 0.01 * (0  + 3.38 * cos((th-180)/2));
+    pose.position.z = 0.01 * 30;
+    pose.orientation.r = 245;
     pose.orientation.p = 0;
-    pose.orientation.y = 0;
+    pose.orientation.y = i;
+    poses.push_back(pose);
+  }
+  for(int th = 270; th<=450; th+=90){
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (20 - 3.38 * sin((th-180)/2));
+    pose.position.y = 0.01 * (0  - 3.38 * cos((th-180)/2));
+    pose.position.z = 0.01 * 30;
+    pose.orientation.r = 245;
+    pose.orientation.p = 0;
+    pose.orientation.y = i;
+    poses.push_back(pose);
+  }
+
+  //second layer
+  for(int th = 180; th<=540; th+=60){
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (20 + 6.13 * sin((th-180)/2));
+    pose.position.y = 0.01 * (0  + 6.13 * cos((th-180)/2));
+    pose.position.z = 0.01 * (30 - 2.11);
+    pose.orientation.r = 220;
+    pose.orientation.p = 0;
+    pose.orientation.y = i;
+    poses.push_back(pose);
+  }
+  for(int th = 270; th<=450; th+=90){
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (20 - 6.13 * sin((th-180)/2));
+    pose.position.y = 0.01 * (0  - 6.13 * cos((th-180)/2));
+    pose.position.z = 0.01 * (30 - 2.11);
+    pose.orientation.r = 220;
+    pose.orientation.p = 0;
+    pose.orientation.y = i;
+    poses.push_back(pose);
+  }
+
+  //third layer
+  for(int th = 180; th<=540; th+=36){
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (20 + 7.73 * sin((th-180)/2));
+    pose.position.y = 0.01 * (0  + 7.73 * cos((th-180)/2));
+    pose.position.z = 0.01 * (30 - 5.18);
+    pose.orientation.r = 195;
+    pose.orientation.p = 0;
+    pose.orientation.y = i;
+    poses.push_back(pose);
+  }
+  for(int th = 270; th<=450; th+=90){
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (20 - 7.73 * sin((th-180)/2));
+    pose.position.y = 0.01 * (0  - 7.73 * cos((th-180)/2));
+    pose.position.z = 0.01 * (30 - 5.18);
+    pose.orientation.r = 195;
+    pose.orientation.p = 0;
+    pose.orientation.y = i;
     poses.push_back(pose);
   }
 
@@ -491,7 +547,7 @@ void ArmImageGenerator::saveLog(int count, const RTC::Pose3D& targetPose) {
 	   << targetPose.orientation.p << ","
 	   << targetPose.orientation.y << std::endl;
   poseFile.close();
-  
+
   m_BehaviorLog << "saveLog() ended." << std::endl;
 }
 
@@ -616,11 +672,11 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     break;
   case 'f':
     std::cout << "move right" << std::endl;
-    if (moveTranslate(0, -0.01*n, 0)) return RTC::RTC_ERROR;    
+    if (moveTranslate(0, -0.01*n, 0)) return RTC::RTC_ERROR;
     break;
   case 's':
     std::cout << "move left" << std::endl;
-    if (moveTranslate(0, 0.01*n, 0)) return RTC::RTC_ERROR;    
+    if (moveTranslate(0, 0.01*n, 0)) return RTC::RTC_ERROR;
     break;
   case 'e':
     std::cout << "move forward" << std::endl;
@@ -670,11 +726,11 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     break;
   case ',':
     std::cout << "rotate," << std::endl;
-    if (rotateX(RADIANS(-n))) return RTC::RTC_ERROR;    
+    if (rotateX(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
   case '.':
     std::cout << "inverse," << std::endl;
-    if (rotateX(RADIANS(n))) return RTC::RTC_ERROR;    
+    if (rotateX(RADIANS(n))) return RTC::RTC_ERROR;
     break;
   default:
     printf("Unknown Command %c\n", c);
