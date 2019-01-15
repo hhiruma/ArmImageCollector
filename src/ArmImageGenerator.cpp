@@ -337,7 +337,7 @@ bool ArmImageGenerator::rotateX(double theta) {
   targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
   targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = c; targetPos.carPos[1][2] = -s; targetPos.carPos[1][3] = 0;
   targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = s; targetPos.carPos[2][2] = c; targetPos.carPos[2][3] = 0;
-  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
   if (ret->id != JARA_ARM::OK) {
     std::cout << "ERROR in ServoON" << std::endl;
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
@@ -353,10 +353,10 @@ bool ArmImageGenerator::rotateY(double theta) {
   double s = sin(theta);
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
-  targetPos.carPos[0][0] = -1+c; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = -s; targetPos.carPos[0][3] = 0.2;
+  targetPos.carPos[0][0] = c; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = -s; targetPos.carPos[0][3] = 0;
   targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
-  targetPos.carPos[2][0] = s; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1+c; targetPos.carPos[2][3] = 0.3;
-  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
+  targetPos.carPos[2][0] = s; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = c; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
   if (ret->id != JARA_ARM::OK) {
     std::cout << "ERROR in ServoON" << std::endl;
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
@@ -374,8 +374,8 @@ bool ArmImageGenerator::rotateZ(double theta) {
   targetPos.elbow = 0;
   targetPos.carPos[0][0] = c; targetPos.carPos[0][1] = -s; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
   targetPos.carPos[1][0] = s; targetPos.carPos[1][1] = c; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
-  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = 0;
-  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
   if (ret->id != JARA_ARM::OK) {
     std::cout << "ERROR in ServoON" << std::endl;
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
@@ -401,8 +401,25 @@ bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
   }
   return false;
 }
+/*
+bool ArmImageGenerator::rotateHand(const RTC::Pose3D& poses){
+	//なぜか作れない？？？
+	std::cout << "rotate hand" << std::endl;
+	m_BehaviorLog
+		<< "rotateHand("
+		<< "roll=" << poses.orientation.r << ")" << std::endl;
 
-
+	float roll = poses.orientation.r;
+	if (roll < M_PI) {
+		rotateZ(-roll / 2);
+	}
+	else if (roll == M_PI) {
+	}
+	else {
+		rotateZ(roll / 2 - M_PI / 2);
+	}
+}
+*/
 bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   std::cout << "move abs with pose 3d" << std::endl;
   m_BehaviorLog
@@ -419,30 +436,47 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
 
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
+  
   //translate position
   targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] =  0; targetPos.carPos[0][3] = poses.position.x;
   targetPos.carPos[1][0] =  0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] =  0; targetPos.carPos[1][3] = poses.position.y;
   targetPos.carPos[2][0] =  0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = poses.position.z;
   
-
   //rotate yaw
+
   double c_yaw = cos(poses.orientation.y);
   double s_yaw = sin(poses.orientation.y);
   targetPos.carPos[0][0] += c_yaw; targetPos.carPos[0][1] += 0; targetPos.carPos[0][2] += -s_yaw;
   targetPos.carPos[1][0] +=     0; targetPos.carPos[1][1] += 0; targetPos.carPos[1][2] +=      0;
   targetPos.carPos[2][0] += s_yaw; targetPos.carPos[2][1] += 0; targetPos.carPos[2][2] +=  c_yaw;
+  
+  //rotate pitch
+  double c_pitch = cos(poses.orientation.p);
+  double s_pitch = sin(poses.orientation.p);
+  targetPos.carPos[0][0] += 0; targetPos.carPos[0][1] +=       0; targetPos.carPos[0][2] +=        0;
+  targetPos.carPos[1][0] += 0; targetPos.carPos[1][1] += c_pitch; targetPos.carPos[1][2] += -s_pitch;
+  targetPos.carPos[2][0] += 0; targetPos.carPos[2][1] += s_pitch; targetPos.carPos[2][2] += -c_pitch;
 
   //rotate roll
+  /*
   double c_roll = cos(poses.orientation.r);
   double s_roll = sin(poses.orientation.r);
   targetPos.carPos[0][0] += c_roll; targetPos.carPos[0][1] += -s_roll; targetPos.carPos[0][2] += 0;
   targetPos.carPos[1][0] += s_roll; targetPos.carPos[1][1] +=  c_roll; targetPos.carPos[1][2] += 0;
   targetPos.carPos[2][0] +=      0; targetPos.carPos[2][1] +=       0; targetPos.carPos[2][2] += 0;
-  
+  */
+
+  printf("x: %f\n", poses.position.x);
+  printf("y: %f\n", poses.position.y);
+  printf("z: %f\n", poses.position.z);
+  printf("yaw: %f\n", poses.orientation.y / M_PI * 180);
+  printf("pitch: %f\n", poses.orientation.p / M_PI * 180);
+  printf("roll: %f\n\n", poses.orientation.r / M_PI *180);
+  /*
   printf("tarPos: %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[0][0], targetPos.carPos[0][1], targetPos.carPos[0][2], targetPos.carPos[0][3]);
   printf("        %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[1][0], targetPos.carPos[1][1], targetPos.carPos[1][2], targetPos.carPos[1][3]);
   printf("        %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[2][0], targetPos.carPos[2][1], targetPos.carPos[2][2], targetPos.carPos[2][3]);
-
+  */
 
   JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
   if (ret->id != JARA_ARM::OK) {
@@ -468,50 +502,68 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   // poses.orientation.y ヨー
   // poses.orientation.p ピッチ
 
-  double distToCam = 5;  //座標位置からカメラ位置までの距離(cm)
+  double lenWristToCam = 11;  //座標位置からカメラ位置までの距離(cm)
+  double lenElbowToCam = 20;  //肘からカメラ位置までの距離（cm）
 
   //first layer
-  for(int roll = 0; roll<=360; roll+=90){
+  //とりあえずこの1層目だけ動くよにした　→　望みは手首の部分だけ回すプログラムがあれば終了
+  for(int th = 90; th<=270; th+=90){
+	int roll = th;
 	int yaw = 245;
+	yaw = 220;
+	double r = 3.38;
+	r = 6.13;
+	double z = lenElbowToCam * cos(RADIANS(yaw));
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 + 3.38 * sin(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  + 3.38 * cos(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30                                     + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (20 + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (0  + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (30                            + lenWristToCam * cos(RADIANS((yaw-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = 0;
-    pose.orientation.y = RADIANS(yaw);
+    pose.orientation.p = M_PI + atan(cos(RADIANS(roll/2))*tan(RADIANS(yaw-180)));
+    pose.orientation.y = M_PI + atan(sin(RADIANS(roll/2))*tan(RADIANS(yaw-180)));
     poses.push_back(pose);
   }
-  for(int roll = 270; roll<=450; roll+=90){
+  for(int th = 0; th<=360; th+=90){
+	int roll = th;
+	if (roll == 0) roll = 1;
 	int yaw = 115;
+	yaw = 140;
+	double r = 3.38;
+	r = 6.13;
+	double z = lenElbowToCam * cos(RADIANS(yaw));
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 - 3.38 * sin(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  - 3.38 * cos(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30                                     + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (20 - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (0  - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (30                            + lenWristToCam * cos(RADIANS((yaw-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = 0;
-	pose.orientation.y = RADIANS(yaw);
+	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-yaw)));
+	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-yaw)));
     poses.push_back(pose);
   }
 
+  return poses;
+  /*
   //second layer
-  for(int roll = 180; roll<=540; roll+=60){
+  for(int th = 60; th<=300; th+=60){
+	int roll = th;
 	int yaw = 220;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (20 + 6.13 * sin(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.y = 0.01 * (0  + 6.13 * cos(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 2.11                              + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.z = 0.01 * (30 - 2.11                        + distToCam * cos(RADIANS((yaw-180)/2)));
 	pose.orientation.r = RADIANS(roll);
     pose.orientation.p = 0;
 	pose.orientation.y = RADIANS(yaw);
     poses.push_back(pose);
   }
-  for(int roll = 240; roll<=480; roll+=60){
+  for(int th = 0; th<=360; th+=60){
+	int roll = th;
+	if (roll == 0) roll = 1;
 	int yaw = 140;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (20 - 6.13 * sin(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.y = 0.01 * (0  - 6.13 * cos(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 2.11                              + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.z = 0.01 * (30 - 2.11                        + distToCam * cos(RADIANS((yaw-180)/2)));
 	pose.orientation.r = RADIANS(roll);
     pose.orientation.p = 0;
 	pose.orientation.y = RADIANS(yaw);
@@ -519,28 +571,32 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   }
 
   //third layer
-  for(int roll = 180; roll<=540; roll+=36){
+  for(int th = 36; th<=324; th+=36){
+	int roll = th;
 	int yaw = 195;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (20 + 7.73 * sin(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.y = 0.01 * (0  + 7.73 * cos(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 5.18                              + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.z = 0.01 * (30 - 5.18                        + distToCam * cos(RADIANS((yaw-180)/2)));
 	pose.orientation.r = RADIANS(roll);
     pose.orientation.p = 0;
 	pose.orientation.y = RADIANS(yaw);
     poses.push_back(pose);
   }
-  for(int roll = 216; roll<=504; roll+=36){
+  for(int th = 0; th<=360; th+=36){
+	int roll = th;
+	if (roll == 0) roll = 1;
 	int yaw = 165;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (20 - 7.73 * sin(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.y = 0.01 * (0  - 7.73 * cos(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 5.18                              + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.z = 0.01 * (30 - 5.18                        + distToCam * cos(RADIANS((yaw-180)/2)));
 	pose.orientation.r = RADIANS(roll);
     pose.orientation.p = 0;
     pose.orientation.y = RADIANS(yaw);
     poses.push_back(pose);
   }
+  */
 
   m_BehaviorLog << "generatePoses() ended." << std::endl;
   return poses;
@@ -775,6 +831,27 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     std::cout << "inverse," << std::endl;
     if (rotateX(RADIANS(n))) return RTC::RTC_ERROR;
     break;
+  case 'z':
+	  std::cout << "m_joint_pos" << std::endl;
+	  /*
+	  JARA_ARM::RETURN_ID_var ret2 = m_manipCommon->getFeedbackPosJoint(actual);
+	  */
+	  m_jointPos->length(6);
+	  m_jointPos[0] = 0;
+	  m_jointPos[1] = M_PI / 4;
+	  m_jointPos[2] = M_PI / 4;
+	  m_jointPos[3] = 0;
+	  m_jointPos[4] = M_PI / 2;
+	  m_jointPos[5] = M_PI / 4;
+
+	  ret = m_manipMiddle->movePTPJointAbs(m_jointPos);
+	  if (ret->id != JARA_ARM::OK) {
+		  std::cout << "ERROR in ServoON" << std::endl;
+		  std::cout << " ERRORCODE    :" << ret->id << std::endl;
+		  std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+	  }
+
+	  break;
   default:
     printf("Unknown Command %c\n", c);
     break;
