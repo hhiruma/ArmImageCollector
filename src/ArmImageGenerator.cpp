@@ -503,100 +503,97 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   // poses.orientation.p ピッチ
 
   double lenWristToCam = 11;  //座標位置からカメラ位置までの距離(cm)
-  double lenElbowToCam = 20;  //肘からカメラ位置までの距離（cm）
+	double x_offset = 20; //changed int to double
+	double y_offset = 0;
+	double z_offset = 27;
 
   //first layer
   //とりあえずこの1層目だけ動くよにした　→　望みは手首の部分だけ回すプログラムがあれば終了
   for(int th = 90; th<=270; th+=90){
 	int roll = th;
-	int yaw = 245;
-	yaw = 220;
-	double r = 3.38;
-	r = 6.13;
-	double z = lenElbowToCam * cos(RADIANS(yaw));
+	int pitch = 235;
+	double r = 4.59;
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30                            + lenWristToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (x_offset + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset                            + lenWristToCam * cos(RADIANS((pitch-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = M_PI + atan(cos(RADIANS(roll/2))*tan(RADIANS(yaw-180)));
-    pose.orientation.y = M_PI + atan(sin(RADIANS(roll/2))*tan(RADIANS(yaw-180)));
+    pose.orientation.p = M_PI + atan(cos(RADIANS(roll/2))*tan(RADIANS(pitch-180)));
+    pose.orientation.y = M_PI + atan(sin(RADIANS(roll/2))*tan(RADIANS(pitch-180)));
     poses.push_back(pose);
   }
   for(int th = 0; th<=360; th+=90){
 	int roll = th;
 	if (roll == 0) roll = 1;
-	int yaw = 115;
-	yaw = 140;
-	double r = 3.38;
-	r = 6.13;
-	double z = lenElbowToCam * cos(RADIANS(yaw));
+	int pitch= 125;
+	double r = 4.59;
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30                            + lenWristToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset                          + lenWristToCam * cos(RADIANS((pitch-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-yaw)));
-	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-yaw)));
+	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
 
-  return poses;
-  /*
   //second layer
   for(int th = 60; th<=300; th+=60){
 	int roll = th;
-	int yaw = 220;
+	int pitch= 210;
+	double r = 8.66;
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 + 6.13 * sin(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  + 6.13 * cos(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 2.11                        + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (x_offset + 6.13 * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset + 6.13 * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - 1.55                       + lenWristToCam * cos(RADIANS((pitch-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = 0;
-	pose.orientation.y = RADIANS(yaw);
+	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
   for(int th = 0; th<=360; th+=60){
 	int roll = th;
 	if (roll == 0) roll = 1;
-	int yaw = 140;
+	int pitch= 150;
+	double r = 8.66;
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 - 6.13 * sin(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  - 6.13 * cos(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 2.11                        + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (x_offset - 6.13 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - 6.13 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - 1.55                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = 0;
-	pose.orientation.y = RADIANS(yaw);
+	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
 
   //third layer
   for(int th = 36; th<=324; th+=36){
 	int roll = th;
-	int yaw = 195;
+	int pitch= 195;
+	double r = 7.73;
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 + 7.73 * sin(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  + 7.73 * cos(RADIANS(roll/2)) - distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 5.18                        + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (x_offset + 7.73 * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset + 7.73 * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - 4.48                    + lenWristToCam * cos(RADIANS((pitch-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = 0;
-	pose.orientation.y = RADIANS(yaw);
+	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
   for(int th = 0; th<=360; th+=36){
 	int roll = th;
 	if (roll == 0) roll = 1;
-	int yaw = 165;
+	int pitch= 165;
+	double r = 7.73;
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (20 - 7.73 * sin(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (0  - 7.73 * cos(RADIANS(roll/2)) + distToCam * sin(RADIANS((yaw-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (30 - 5.18                        + distToCam * cos(RADIANS((yaw-180)/2)));
+    pose.position.x = 0.01 * (x_offset - 7.73 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - 7.73 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - 4.48                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
 	pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = 0;
-    pose.orientation.y = RADIANS(yaw);
+	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
-  */
 
   m_BehaviorLog << "generatePoses() ended." << std::endl;
   return poses;
