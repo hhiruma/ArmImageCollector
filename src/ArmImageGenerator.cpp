@@ -599,7 +599,7 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   return poses;
 }
 
-RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double> joints) {
+RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double>& joints) {
   joints.clear();
   
 
@@ -625,6 +625,10 @@ RTC::ReturnCode_t ArmImageGenerator::moveJointAbs(const std::vector<double> join
   if (joints.size() != 6) {
     std::cout << "ERROR: ArmImageGenerator::moveJointAbs(): Size of argument 'joints' must be 6 but " << joints.size() << std::endl;
     return RTC::RTC_ERROR;
+  }
+
+  for (int i= 0; i<6; i++){
+	  std::cout << joints[i] << std::endl;
   }
 
 
@@ -717,6 +721,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 
   coil::TimeValue tv(1.0);
   JARA_ARM::RETURN_ID_var ret;
+  std::vector<double> joints;
 
   switch (c) {
   case 'a' : // a Ç»ÇÁÇŒé©ìÆìÆçÏÇÇµÇƒonExecuteÇï‘Ç∑
@@ -726,13 +731,6 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
   case '0':
     std::cout << "reset" << std::endl;
     moveOrigin();
-    break;
-
-  case '1':
-    std::cout << "circle" << std::endl;
-    break;
-
-  case '2':
     break;
 
   case 'q':
@@ -873,24 +871,20 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     if (rotateX(RADIANS(n))) return RTC::RTC_ERROR;
     break;
   case 'z':
-	  std::cout << "m_joint_pos" << std::endl;
-	  /*
-	  JARA_ARM::RETURN_ID_var ret2 = m_manipCommon->getFeedbackPosJoint(actual);
-	  */
-	  m_jointPos->length(6);
-	  m_jointPos[0] = 0;
-	  m_jointPos[1] = M_PI / 4;
-	  m_jointPos[2] = M_PI / 4;
-	  m_jointPos[3] = 0;
-	  m_jointPos[4] = M_PI / 2;
-	  m_jointPos[5] = M_PI / 4;
+	  std::cout << "get joint_pos" << std::endl;
 
-	  ret = m_manipMiddle->movePTPJointAbs(m_jointPos);
-	  if (ret->id != JARA_ARM::OK) {
-		  std::cout << "ERROR in ServoON" << std::endl;
-		  std::cout << " ERRORCODE    :" << ret->id << std::endl;
-		  std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+	  getJointAbs(joints);
+
+	  for (auto x: joints){
+		  std::cout << x << std::endl;
 	  }
+	  break;
+  case '1':
+	  std::cout << "move by joint_pos" << std::endl;
+
+	  getJointAbs(joints);
+	  joints[5] = 1.57;
+	  moveJointAbs(joints);
 
 	  break;
   default:
