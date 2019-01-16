@@ -384,7 +384,7 @@ class ArmImageGenerator
   
 	 std::string m_logDir;
 
-     float  m_depth;
+  // float  m_depth; not used
 
 
   // 手先をデカルト座標系で移動
@@ -399,6 +399,22 @@ class ArmImageGenerator
   bool moveAbsWithPose3D(const RTC::Pose3D& pose);
   std::vector<RTC::Pose3D> generatePoses();
   void saveLog(int count, const RTC::Pose3D& targetPose);
+
+  /**
+   * 関節角度取得
+   *
+   * @param joints 関節角度を格納するvector．中身はクリアされ，6つの関節のデータが格納される．
+   * @return RTC_OKで成功．失敗時はjointsの内容は不定
+   */
+  RTC::ReturnCode_t getJointAbs(std::vector<double> joints);
+  
+  /**
+   * 関節角度制御
+   *
+   * @param joints 関節角度．jointsは6つの値．サイズが違う場合は失敗する
+   * @return RTC_OKで成功
+   */
+  RTC::ReturnCode_t moveJointAbs(const std::vector<double> joints);
 };
 
 
