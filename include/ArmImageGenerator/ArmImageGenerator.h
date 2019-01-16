@@ -384,7 +384,7 @@ class ArmImageGenerator
   
 	 std::string m_logDir;
 
-     float  m_depth;
+  // float  m_depth; not used
 
 
   // 手先をデカルト座標系で移動

@@ -605,8 +605,20 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
 RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double> joints) {
   joints.clear();
   
+
+  JARA_ARM::JointPos_var pos(new JARA_ARM::JointPos);
+  JARA_ARM::RETURN_ID_var retval;
+  retval = m_manipCommon->getFeedbackPosJoint(pos);
+
+  if (retval->id != JARA_ARM::OK) {
+    std::cout << "ERROR: ArmImageGenerator::getJointAbs():" << retval->comment << std::endl;
+    return RTC::RTC_ERROR;
+  }
+  if (pos->length() != 6) {
+    std::cout << "ERROR: ArmImageGenerator::getJointAbs(): passed pos value does not have 6 elements but " << pos->length() << std::endl;
+  }
   for(int i = 0;i < 6;i++) {
-    joints.push_back(0);
+    joints.push_back(pos[i]);
   }
   return RTC::RTC_OK;
 }
@@ -615,6 +627,19 @@ RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double> joints) {
 RTC::ReturnCode_t ArmImageGenerator::moveJointAbs(const std::vector<double> joints) {
   if (joints.size() != 6) {
     std::cout << "ERROR: ArmImageGenerator::moveJointAbs(): Size of argument 'joints' must be 6 but " << joints.size() << std::endl;
+    return RTC::RTC_ERROR;
+  }
+
+
+  JARA_ARM::JointPos pos;
+  pos.length(6);
+  for(int i = 0;i < 6;i++) {
+    pos[i] = joints[i];
+  }
+  JARA_ARM::RETURN_ID_var retval;
+  retval = m_manipMiddle->movePTPJointAbs(pos);
+  if (retval->id != JARA_ARM::OK) {
+    std::cout << "ERROR: ArmImageGenerator::moveJOintAbs(): " << retval->comment << std::endl;
     return RTC::RTC_ERROR;
   }
   return RTC::RTC_OK;
