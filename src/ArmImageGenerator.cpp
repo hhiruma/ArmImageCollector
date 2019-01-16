@@ -602,6 +602,25 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   return poses;
 }
 
+RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double> joints) {
+  joints.clear();
+  
+  for(int i = 0;i < 6;i++) {
+    joints.push_back(0);
+  }
+  return RTC::RTC_OK;
+}
+
+
+RTC::ReturnCode_t ArmImageGenerator::moveJointAbs(const std::vector<double> joints) {
+  if (joints.size() != 6) {
+    std::cout << "ERROR: ArmImageGenerator::moveJointAbs(): Size of argument 'joints' must be 6 but " << joints.size() << std::endl;
+    return RTC::RTC_ERROR;
+  }
+  return RTC::RTC_OK;
+}
+
+
 RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
   m_BehaviorLog << "onMoveAutomatic()" << std::endl;
 
