@@ -401,25 +401,7 @@ bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
   }
   return false;
 }
-/*
-bool ArmImageGenerator::rotateHand(const RTC::Pose3D& poses){
-	//なぜか作れない？？？
-	std::cout << "rotate hand" << std::endl;
-	m_BehaviorLog
-		<< "rotateHand("
-		<< "roll=" << poses.orientation.r << ")" << std::endl;
 
-	float roll = poses.orientation.r;
-	if (roll < M_PI) {
-		rotateZ(-roll / 2);
-	}
-	else if (roll == M_PI) {
-	}
-	else {
-		rotateZ(roll / 2 - M_PI / 2);
-	}
-}
-*/
 bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   std::cout << "move abs with pose 3d" << std::endl;
   m_BehaviorLog
@@ -466,17 +448,12 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   targetPos.carPos[2][0] +=      0; targetPos.carPos[2][1] +=       0; targetPos.carPos[2][2] += 0;
   */
 
-  printf("x: %f\n", poses.position.x);
-  printf("y: %f\n", poses.position.y);
+  printf("x: %f, ", poses.position.x);
+  printf("y: %f, ", poses.position.y);
   printf("z: %f\n", poses.position.z);
-  printf("yaw: %f\n", poses.orientation.y / M_PI * 180);
-  printf("pitch: %f\n", poses.orientation.p / M_PI * 180);
+  printf("yaw: %f, ", poses.orientation.y / M_PI * 180);
+  printf("pitch: %f, ", poses.orientation.p / M_PI * 180);
   printf("roll: %f\n\n", poses.orientation.r / M_PI *180);
-  /*
-  printf("tarPos: %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[0][0], targetPos.carPos[0][1], targetPos.carPos[0][2], targetPos.carPos[0][3]);
-  printf("        %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[1][0], targetPos.carPos[1][1], targetPos.carPos[1][2], targetPos.carPos[1][3]);
-  printf("        %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[2][0], targetPos.carPos[2][1], targetPos.carPos[2][2], targetPos.carPos[2][3]);
-  */
 
   JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
   if (ret->id != JARA_ARM::OK) {
@@ -503,9 +480,9 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   // poses.orientation.p ピッチ
 
   double lenWristToCam = 11;  //座標位置からカメラ位置までの距離(cm)
-	double x_offset = 20; //changed int to double
+	double x_offset = 23;
 	double y_offset = 0;
-	double z_offset = 27;
+	double z_offset = 22;
 
   //first layer
   //とりあえずこの1層目だけ動くよにした　→　望みは手首の部分だけ回すプログラムがあれば終了
@@ -599,6 +576,32 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   return poses;
 }
 
+bool ArmImageGenerator::fixPosError(RTC::Pose3D pose) {
+  JARA_ARM::CarPosWithElbow_var pos = new JARA_ARM::CarPosWithElbow();//(new JARA_ARM::CarPosWithElbow_var());
+
+  m_manipMiddle->getFeedbackPosCartesian(pos);
+
+  double dx = pose.position.x - pos->carPos[0][3];
+  double dy = pose.position.y - pos->carPos[1][3];
+  double dz = pose.position.z - pos->carPos[2][3];
+
+  std::cout << "fix: x=" << dx << ", y=" << dy << ", z=" << dz << std::endl;
+
+  JARA_ARM::CarPosWithElbow targetPos;
+  targetPos.elbow = 0;
+  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = dx;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = dy;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = dz;
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  if (ret->id != JARA_ARM::OK) {
+    std::cout << "ERROR in ServoON" << std::endl;
+    std::cout << " ERRORCODE    :" << ret->id << std::endl;
+    std::cout << " ERRORMESSAGE :" << ret->comment << std::endl;
+    return true;
+  }
+  return false;
+}
+
 RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double>& joints) {
   joints.clear();
   
@@ -616,6 +619,7 @@ RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double>& joints) {
   }
   for(int i = 0;i < 6;i++) {
     joints.push_back(pos[i]);
+    //std::cout << pos[i] << std::endl;
   }
   return RTC::RTC_OK;
 }
@@ -625,10 +629,6 @@ RTC::ReturnCode_t ArmImageGenerator::moveJointAbs(const std::vector<double> join
   if (joints.size() != 6) {
     std::cout << "ERROR: ArmImageGenerator::moveJointAbs(): Size of argument 'joints' must be 6 but " << joints.size() << std::endl;
     return RTC::RTC_ERROR;
-  }
-
-  for (int i= 0; i<6; i++){
-	  std::cout << joints[i] << std::endl;
   }
 
 
@@ -657,6 +657,16 @@ RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
   int count = 0;
   for (auto pose : poseArray) {
     moveAbsWithPose3D(pose);
+
+    std::vector<double> joints;
+    getJointAbs(joints);
+	double roll = (pose.orientation.r - M_PI) * 0.5;
+	if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
+    joints[5] = roll;
+    moveJointAbs(joints);
+
+    fixPosError(pose);
+
     saveLog(count++, pose);
   }
 
@@ -732,61 +742,6 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     std::cout << "reset" << std::endl;
     moveOrigin();
     break;
-
-  case 'q':
-    std::cout << "Start recording" << std::endl;
-    std::cout << "**Reset coordinates" << std::endl;
-    targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0.25;
-    targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
-    targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = 0.30;
-    ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
-    std::cout << ret->id << std::endl;
-    if (ret->id != JARA_ARM::OK) { std::cout << " ERRORMESSAGE :" << ret->comment << std::endl; }
-    else { std::cout << "OK!" << std::endl; }
-
-    std::cout << " " << std::endl;
-    std::cout << "sleep: 1.0" << std::endl;
-    coil::sleep(tv);
-    std::cout << " " << std::endl;
-    targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
-    targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
-    targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
-
-
-    std::cout << "Layer 1" << std::endl;
-    std::cout << "  angle:        15" << std::endl;
-    std::cout << "  radius:       7.73cm" << std::endl;
-    std::cout << "  height:       2.07cm" << std::endl;
-
-    std::cout << "* move to offset" << std::endl;
-    std::cout << "  dir offset:   9" << std::endl;
-    targetPos.carPos[0][3] = -0.;  //down
-    ret = m_manipMiddle->movePTPCartesianRel(targetPos);
-    if (ret->id != JARA_ARM::OK) { std::cout << " ERRORMESSAGE :" << ret->comment << std::endl; }
-    else { std::cout << "OK!" << std::endl; }
-
-    std::cout << " " << std::endl;
-    std::cout << "sleep: 1.0" << std::endl;
-    coil::sleep(tv);
-    std::cout << " " << std::endl;
-    targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
-    targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
-    targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
-
-    /*
-      std::cout << "Layer 2" << std::endl;
-      targetPos.carPos[2][3] = -0.0084;  //down
-      targetPos.carPos[0][3] = +0.038;   //forward
-      targetPos.carPos[0][0] = cos(RADIANS(-25));  //手前
-      targetPos.carPos[0][2] = -sin(RADIANS(-25));
-      targetPos.carPos[2][0] = sin(RADIANS(-25));
-      targetPos.carPos[2][2] = cos(RADIANS(-25));
-      ret = m_manipMiddle->movePTPCartesianRel(targetPos);
-      if (ret->id != JARA_ARM::OK) { std::cout << " ERRORMESSAGE :" << ret->comment << std::endl; }
-      else { std::cout << "OK!" << std::endl; }
-    */
-    break;
-
   case 'l':
     std::cout << "getFeedbackPosCartesian" << std::endl;
 #ifndef NO_ARM_CONNECTION
@@ -883,7 +838,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 	  std::cout << "move by joint_pos" << std::endl;
 
 	  getJointAbs(joints);
-	  joints[5] = 1.57;
+	  joints[5] = RADIANS(n);
 	  moveJointAbs(joints);
 
 	  break;
