@@ -426,6 +426,8 @@ class ArmImageGenerator
    * @return trueで成功
    */
   bool fixPosError(const RTC::Pose3D pose);
+
+  void saveImage();
 };
 
 

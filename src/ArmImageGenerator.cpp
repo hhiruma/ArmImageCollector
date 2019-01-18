@@ -484,7 +484,7 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
   // poses.orientation.p ピッチ
 
   double lenWristToCam = 11;  //座標位置からカメラ位置までの距離(cm)
-	double x_offset = 23;
+	double x_offset = 27;
 	double y_offset = 0;
 	double z_offset = 22;
 
@@ -678,6 +678,60 @@ RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
   return RTC::RTC_OK;
 }
 
+void ArmImageGenerator::saveImage(){
+  /// Capture Image and Save
+  bool imageArrived = false;
+
+  //Inport data check
+  while (!imageArrived){
+	  while (m_rgbCameraImageIn0.isNew()){
+		  m_rgbCameraImageIn0.read();
+		  imageArrived = true;
+	  }
+  }
+  std::cout << "[ArmImageGenerator] Image Arrived." << std::endl;
+
+  long width = m_rgbCameraImage0.data.image.width;
+  long height = m_rgbCameraImage0.data.image.height;
+  long channels = (m_rgbCameraImage0.data.image.format == Img::CF_GRAY) ? 1 :
+	  (m_rgbCameraImage0.data.image.format == Img::CF_RGB || m_rgbCameraImage0.data.image.format == Img::CF_PNG || m_rgbCameraImage0.data.image.format == Img::CF_JPEG) ? 3 :
+	  (m_rgbCameraImage0.data.image.raw_data.length() / width / height);
+
+  if (channels == 3)
+	  m_buffer.create(height, width, CV_8UC3);
+
+  else
+	  m_buffer.create(height, width, CV_8UC1);
+
+  long data_length = m_rgbCameraImage0.data.image.raw_data.length();
+
+
+  if (m_rgbCameraImage0.data.image.format == Img::CF_RGB || m_rgbCameraImage0.data.image.format == Img::CF_GRAY) {
+	  for (int i = 0; i < height; ++i)
+		  memcpy(&m_buffer.data[i*m_buffer.step], &m_rgbCameraImage0.data.image.raw_data[i*width*channels], sizeof(unsigned char)*width*channels);
+	  if (channels == 3)
+		  cv::cvtColor(m_buffer, m_buffer, CV_RGB2BGR);
+  }
+  else if (m_rgbCameraImage0.data.image.format == Img::CF_JPEG || m_rgbCameraImage0.data.image.format == Img::CF_PNG) {
+	  std::vector<uchar> compressed_image = std::vector<uchar>(data_length);
+	  memcpy(&compressed_image[0], &m_rgbCameraImage0.data.image.raw_data[0], sizeof(unsigned char) * data_length);
+
+	  //Decode received compressed image
+	  cv::Mat decoded_image;
+	  if (channels == 3) {
+		  decoded_image = cv::imdecode(cv::Mat(compressed_image), CV_LOAD_IMAGE_COLOR);
+		  cv::cvtColor(decoded_image, m_buffer, CV_RGB2BGR);
+	  }
+	  else {
+		  decoded_image = cv::imdecode(cv::Mat(compressed_image), CV_LOAD_IMAGE_GRAYSCALE);
+		  m_buffer = decoded_image;
+	  }
+  } 
+  cv::imwrite(m_logDir + "/test_image_1.png", m_buffer);
+
+  std::cout << "saved image to : " << m_logDir << "/test_image_1.png" << std::endl;
+}
+
 void ArmImageGenerator::saveLog(int count, const RTC::Pose3D& targetPose) {
   /// TODO: ここでデータを保存します．
   m_BehaviorLog << "saveLog(" << count << ")" << std::endl;
@@ -849,83 +903,11 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 
 	  break;
   case '2':
-	  //m_cameraCaptureService->take_one_frame();
-	  getImage = true;
+	  saveImage();
 	  break;
   default:
     printf("Unknown Command %c\n", c);
     break;
-  }
-
-  if (getImage){
-	  /// Capture Image and Save
-	  bool imageArrived = false;
-	  //long counter = 0;
-
-	  //Inport data check
-	  //while (m_rgbCameraImageIn0.isNew() && (!imageArrived)) {
-	  while (!imageArrived){
-		  while (m_rgbCameraImageIn0.isNew()){
-			  m_rgbCameraImageIn0.read();
-			  imageArrived = true;
-		  }
-	  }
-	  std::cout << "[ArmImageGenerator] Image Arrived." << std::endl;
-
-	  long width = m_rgbCameraImage0.data.image.width;
-	  long height = m_rgbCameraImage0.data.image.height;
-	  long channels = (m_rgbCameraImage0.data.image.format == Img::CF_GRAY) ? 1 :
-		  (m_rgbCameraImage0.data.image.format == Img::CF_RGB || m_rgbCameraImage0.data.image.format == Img::CF_PNG || m_rgbCameraImage0.data.image.format == Img::CF_JPEG) ? 3 :
-		  (m_rgbCameraImage0.data.image.raw_data.length() / width / height);
-
-	  if (channels == 3)
-		  m_buffer.create(height, width, CV_8UC3);
-
-	  else
-		  m_buffer.create(height, width, CV_8UC1);
-
-	  long data_length = m_rgbCameraImage0.data.image.raw_data.length();
-
-      std::cout << typeid(m_rgbCameraImage0.data.image.raw_data[0]).name() << std::endl;
-	  std::cout << m_rgbCameraImage0.data.image.raw_data.length() << std::endl;
-	  //std::cout << static_cast<unsigned>(m_rgbCameraImage0.data.image.raw_data[1000]) << std::endl;
-	  for (int i = 0; i<data_length/10; i++) std::cout << static_cast<unsigned>(m_rgbCameraImage0.data.image.raw_data[1000]) << std::endl;
-
-	  //long image_size = width * height * channels;
-
-	  if (m_rgbCameraImage0.data.image.format == Img::CF_RGB || m_rgbCameraImage0.data.image.format == Img::CF_GRAY) {
-		  for (int i = 0; i < height; ++i)
-			  memcpy(&m_buffer.data[i*m_buffer.step], &m_rgbCameraImage0.data.image.raw_data[i*width*channels], sizeof(unsigned char)*width*channels);
-		  if (channels == 3)
-			  cv::cvtColor(m_buffer, m_buffer, CV_RGB2BGR);
-	  }
-	  else if (m_rgbCameraImage0.data.image.format == Img::CF_JPEG || m_rgbCameraImage0.data.image.format == Img::CF_PNG) {
-		  std::vector<uchar> compressed_image = std::vector<uchar>(data_length);
-		  memcpy(&compressed_image[0], &m_rgbCameraImage0.data.image.raw_data[0], sizeof(unsigned char) * data_length);
-
-		  //Decode received compressed image
-		  cv::Mat decoded_image;
-		  if (channels == 3) {
-			  decoded_image = cv::imdecode(cv::Mat(compressed_image), CV_LOAD_IMAGE_COLOR);
-			  cv::cvtColor(decoded_image, m_buffer, CV_RGB2BGR);
-		  }
-		  else {
-			  decoded_image = cv::imdecode(cv::Mat(compressed_image), CV_LOAD_IMAGE_GRAYSCALE);
-			  m_buffer = decoded_image;
-		  }
-	  } 
-	  //std::string filename = "test_image";
-	  //cv::imwrite(m_logDir + "/" + filename, m_buffer);
-	  cv::imwrite(m_logDir + "/test_image.png", m_buffer);
-
-	  //m_JointLog << x << ", " << y << ", " << th << ", " << filename << ", depth_" << filename << std::endl;
-	  std::cout << "saved image to : " << m_logDir << "/test_image.png" << std::endl;
-	  /*
-	  long d_width = m_rgbdCameraImage.data.depthImage.width;
-	  long d_height = m_rgbdCameraImage.data.depthImage.height;
-	  long size = d_width * d_height;
-	  */
-	  getImage = false;
   }
 
   /*
