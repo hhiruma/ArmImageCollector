@@ -863,9 +863,12 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 	  //long counter = 0;
 
 	  //Inport data check
-	  while (m_rgbCameraImageIn0.isNew() && (!imageArrived)) {
-		  m_rgbCameraImageIn0.read();
-		  imageArrived = true;
+	  //while (m_rgbCameraImageIn0.isNew() && (!imageArrived)) {
+	  while (!imageArrived){
+		  while (m_rgbCameraImageIn0.isNew()){
+			  m_rgbCameraImageIn0.read();
+			  imageArrived = true;
+		  }
 	  }
 	  std::cout << "[ArmImageGenerator] Image Arrived." << std::endl;
 
@@ -885,8 +888,8 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 
       std::cout << typeid(m_rgbCameraImage0.data.image.raw_data[0]).name() << std::endl;
 	  std::cout << m_rgbCameraImage0.data.image.raw_data.length() << std::endl;
-	  std::cout << static_cast<unsigned>(m_rgbCameraImage0.data.image.raw_data[0]) << std::endl;
-	  //for(int i=0; i<data_length; i++) printf("%c", m_rgbCameraImage0.data.image.raw_data[i]);
+	  //std::cout << static_cast<unsigned>(m_rgbCameraImage0.data.image.raw_data[1000]) << std::endl;
+	  for (int i = 0; i<data_length/10; i++) std::cout << static_cast<unsigned>(m_rgbCameraImage0.data.image.raw_data[1000]) << std::endl;
 
 	  //long image_size = width * height * channels;
 
@@ -911,6 +914,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 			  m_buffer = decoded_image;
 		  }
 	  }
+	  std::cout << "FORMAT is: " << m_rgbCameraImage0.data.image.format << std::endl;
 	  //std::string filename = "test_image";
 	  //cv::imwrite(m_logDir + "/" + filename, m_buffer);
 	  cv::imwrite(m_logDir + "/test_image.png", m_buffer);
