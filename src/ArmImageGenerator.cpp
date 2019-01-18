@@ -893,7 +893,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 
 	  //long image_size = width * height * channels;
 
-	  if (m_rgbCameraImage0.data.image.format == Img::CF_RGB) {
+	  if (m_rgbCameraImage0.data.image.format == Img::CF_RGB || m_rgbCameraImage0.data.image.format == Img::CF_GRAY) {
 		  for (int i = 0; i < height; ++i)
 			  memcpy(&m_buffer.data[i*m_buffer.step], &m_rgbCameraImage0.data.image.raw_data[i*width*channels], sizeof(unsigned char)*width*channels);
 		  if (channels == 3)
@@ -913,8 +913,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
 			  decoded_image = cv::imdecode(cv::Mat(compressed_image), CV_LOAD_IMAGE_GRAYSCALE);
 			  m_buffer = decoded_image;
 		  }
-	  }
-	  std::cout << "FORMAT is: " << m_rgbCameraImage0.data.image.format << std::endl;
+	  } 
 	  //std::string filename = "test_image";
 	  //cv::imwrite(m_logDir + "/" + filename, m_buffer);
 	  cv::imwrite(m_logDir + "/test_image.png", m_buffer);

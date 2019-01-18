@@ -27,8 +27,8 @@ module Img {
   enum ColorFormat
   {
     CF_UNKNOWN,   //Unknown Color Format
-    CF_RGB,       //RGB raw data format
     CF_GRAY,      //8bit gray image data format
+    CF_RGB,       //RGB raw data format
     CF_JPEG,      //JPEG image format
     CF_PNG,       //PNG image format
 
