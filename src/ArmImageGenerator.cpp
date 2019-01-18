@@ -488,16 +488,19 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
 	double x_offset = 27;
 	double y_offset = 0;
 	double z_offset = 22;
+  double original_r = 8;
+  double first_pitch = 235;
 
   //first layer
   for(int th = 90; th<=270; th+=90){
     int roll = th;
     int pitch = 235;
-    double r = 4.59;
+    double z_shift = original_r * (sin(RADIANS(pitch-180)) - sin(RADIANS(first_pitch-180)));
+    double r = original_r * cos(RADIANS(pitch-180));
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset                            + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
     pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI + atan(cos(RADIANS(roll/2))*tan(RADIANS(pitch-180)));
     pose.orientation.y = M_PI + atan(sin(RADIANS(roll/2))*tan(RADIANS(pitch-180)));
@@ -508,11 +511,12 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
   for(int th = 60; th<=300; th+=60){
     int roll = th;
     int pitch= 210;
-    double r = 8.66;
+    double r = original_r * cos(RADIANS(pitch-180));
+    double z_shift = original_r * (sin(RADIANS(pitch-180)) - sin(RADIANS(first_pitch-180)));
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (x_offset + 6.13 * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (y_offset + 6.13 * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset - 1.55                       + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.position.x = 0.01 * (x_offset + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
     pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
@@ -523,11 +527,12 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
   for(int th = 36; th<=324; th+=36){
     int roll = th;
     int pitch= 195;
-    double r = 7.73;
+    double r = original_r * cos(RADIANS(pitch-180));
+    double z_shift = original_r * (sin(RADIANS(pitch-180)) - sin(RADIANS(first_pitch-180)));
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (x_offset + 7.73 * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (y_offset + 7.73 * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset - 4.48                    + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.position.x = 0.01 * (x_offset + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
     pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
@@ -546,17 +551,20 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses2() {
 	double x_offset = 27;
 	double y_offset = 0;
 	double z_offset = 22;
+  double original_r = 8;
+  double first_pitch = 125;
 
   //first layer
   for(int th = 0; th<=360; th+=90){
     int roll = th;
     if (roll == 0) roll = 1;
     int pitch= 125;
-    double r = 4.59;
+    double z_shift = original_r * (sin(RADIANS(180-pitch)) - sin(RADIANS(180-first_pitch)));
+    double r = original_r * cos(RADIANS(180-pitch));
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset                          + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
     pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
@@ -568,11 +576,12 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses2() {
     int roll = th;
     if (roll == 0) roll = 1;
     int pitch= 150;
-    double r = 8.66;
+    double z_shift = original_r * (sin(RADIANS(180-pitch)) - sin(RADIANS(180-first_pitch)));
+    double r = original_r * cos(RADIANS(180-pitch));
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (x_offset - 6.13 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (y_offset - 6.13 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset - 1.55                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
     pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
@@ -584,11 +593,12 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses2() {
     int roll = th;
     if (roll == 0) roll = 1;
     int pitch= 165;
-    double r = 7.73;
+    double z_shift = original_r * (sin(RADIANS(180-pitch)) - sin(RADIANS(180-first_pitch)));
+    double r = original_r * cos(RADIANS(180-pitch));
     RTC::Pose3D pose;
-    pose.position.x = 0.01 * (x_offset - 7.73 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (y_offset - 7.73 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset - 4.48                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
     pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
@@ -749,7 +759,7 @@ RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
 
     coil::sleep(tv);
     //‰æ‘œ•Û‘¶
-    saveImage(dirName + "/images/image_" + std::to_string(count) + ".jpg");
+    saveImage(dirName + "/images/image_" + std::to_string(count) + ".png");
     //ˆÊ’u•Û‘¶
     saveViewpoint(pose, dirName + "/viewpoints/viewpoint_" + std::to_string(count) + ".csv");
 
