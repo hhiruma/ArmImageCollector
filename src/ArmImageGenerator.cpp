@@ -422,12 +422,12 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
 
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
-  
+
   //translate position
   targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] =  0; targetPos.carPos[0][3] = poses.position.x;
   targetPos.carPos[1][0] =  0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] =  0; targetPos.carPos[1][3] = poses.position.y;
   targetPos.carPos[2][0] =  0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = poses.position.z;
-  
+
   //rotate yaw
 
   double c_yaw = cos(poses.orientation.y);
@@ -435,7 +435,7 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   targetPos.carPos[0][0] += c_yaw; targetPos.carPos[0][1] += 0; targetPos.carPos[0][2] += -s_yaw;
   targetPos.carPos[1][0] +=     0; targetPos.carPos[1][1] += 0; targetPos.carPos[1][2] +=      0;
   targetPos.carPos[2][0] += s_yaw; targetPos.carPos[2][1] += 0; targetPos.carPos[2][2] +=  c_yaw;
-  
+
   //rotate pitch
   double c_pitch = cos(poses.orientation.p);
   double s_pitch = sin(poses.orientation.p);
@@ -489,90 +489,89 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
 	double z_offset = 22;
 
   //first layer
-  //とりあえずこの1層目だけ動くよにした　→　望みは手首の部分だけ回すプログラムがあれば終了
   for(int th = 90; th<=270; th+=90){
-	int roll = th;
-	int pitch = 235;
-	double r = 4.59;
+    int roll = th;
+    int pitch = 235;
+    double r = 4.59;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.z = 0.01 * (z_offset                            + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-	pose.orientation.r = RADIANS(roll);
+    pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI + atan(cos(RADIANS(roll/2))*tan(RADIANS(pitch-180)));
     pose.orientation.y = M_PI + atan(sin(RADIANS(roll/2))*tan(RADIANS(pitch-180)));
     poses.push_back(pose);
   }
   for(int th = 0; th<=360; th+=90){
-	int roll = th;
-	if (roll == 0) roll = 1;
-	int pitch= 125;
-	double r = 4.59;
+    int roll = th;
+    if (roll == 0) roll = 1;
+    int pitch= 125;
+    double r = 4.59;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.z = 0.01 * (z_offset                          + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-	pose.orientation.r = RADIANS(roll);
-	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
 
   //second layer
   for(int th = 60; th<=300; th+=60){
-	int roll = th;
-	int pitch= 210;
-	double r = 8.66;
+    int roll = th;
+    int pitch= 210;
+    double r = 8.66;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset + 6.13 * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset + 6.13 * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.z = 0.01 * (z_offset - 1.55                       + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-	pose.orientation.r = RADIANS(roll);
-	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
   for(int th = 0; th<=360; th+=60){
-	int roll = th;
-	if (roll == 0) roll = 1;
-	int pitch= 150;
-	double r = 8.66;
+    int roll = th;
+    if (roll == 0) roll = 1;
+    int pitch= 150;
+    double r = 8.66;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset - 6.13 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset - 6.13 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.z = 0.01 * (z_offset - 1.55                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-	pose.orientation.r = RADIANS(roll);
-	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
 
   //third layer
   for(int th = 36; th<=324; th+=36){
-	int roll = th;
-	int pitch= 195;
-	double r = 7.73;
+    int roll = th;
+    int pitch= 195;
+    double r = 7.73;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset + 7.73 * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset + 7.73 * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.z = 0.01 * (z_offset - 4.48                    + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-	pose.orientation.r = RADIANS(roll);
-	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
   for(int th = 0; th<=360; th+=36){
-	int roll = th;
-	if (roll == 0) roll = 1;
-	int pitch= 165;
-	double r = 7.73;
+    int roll = th;
+    if (roll == 0) roll = 1;
+    int pitch= 165;
+    double r = 7.73;
     RTC::Pose3D pose;
     pose.position.x = 0.01 * (x_offset - 7.73 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset - 7.73 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.z = 0.01 * (z_offset - 4.48                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-	pose.orientation.r = RADIANS(roll);
-	pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-	pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
 
@@ -608,7 +607,6 @@ bool ArmImageGenerator::fixPosError(RTC::Pose3D pose) {
 
 RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double>& joints) {
   joints.clear();
-  
 
   JARA_ARM::JointPos_var pos(new JARA_ARM::JointPos);
   JARA_ARM::RETURN_ID_var retval;
@@ -623,7 +621,6 @@ RTC::ReturnCode_t ArmImageGenerator::getJointAbs(std::vector<double>& joints) {
   }
   for(int i = 0;i < 6;i++) {
     joints.push_back(pos[i]);
-    //std::cout << pos[i] << std::endl;
   }
   return RTC::RTC_OK;
 }
@@ -634,7 +631,6 @@ RTC::ReturnCode_t ArmImageGenerator::moveJointAbs(const std::vector<double> join
     std::cout << "ERROR: ArmImageGenerator::moveJointAbs(): Size of argument 'joints' must be 6 but " << joints.size() << std::endl;
     return RTC::RTC_ERROR;
   }
-
 
   JARA_ARM::JointPos pos;
   pos.length(6);
@@ -664,8 +660,8 @@ RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
 
     std::vector<double> joints;
     getJointAbs(joints);
-	double roll = (pose.orientation.r - M_PI) * 0.5;
-	if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
+    double roll = (pose.orientation.r - M_PI) * 0.5;
+    if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
     joints[5] = roll;
     moveJointAbs(joints);
 
@@ -726,7 +722,7 @@ void ArmImageGenerator::saveImage(){
 		  decoded_image = cv::imdecode(cv::Mat(compressed_image), CV_LOAD_IMAGE_GRAYSCALE);
 		  m_buffer = decoded_image;
 	  }
-  } 
+  }
   cv::imwrite(m_logDir + "/test_image_1.png", m_buffer);
 
   std::cout << "saved image to : " << m_logDir << "/test_image_1.png" << std::endl;
@@ -744,7 +740,6 @@ void ArmImageGenerator::saveLog(int count, const RTC::Pose3D& targetPose) {
   ext = ".csv";
   poss << m_logDir << "/poses/" << "pose" << std::setw(4) << std::setfill('0') << count << ext;
   std::string poseFilename = poss.str();
-
 
   /// 画像ファイルの保存．今はダミー 1/10
   std::ofstream imFile(imageFilename);
@@ -1209,11 +1204,8 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
   }
 */
 
-
-
 extern "C"
 {
-
   void ArmImageGeneratorInit(RTC::Manager* manager)
   {
     coil::Properties profile(armimagegenerator_spec);
@@ -1221,7 +1213,4 @@ extern "C"
 			     RTC::Create<ArmImageGenerator>,
 			     RTC::Delete<ArmImageGenerator>);
   }
-
 };
-
-
