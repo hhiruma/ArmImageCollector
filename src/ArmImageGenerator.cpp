@@ -489,12 +489,12 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
 	double y_offset = 0;
 	double z_offset = 22;
   double original_r = 8;
-  double first_pitch = 235;
+  double first_pitch = 230;
 
   //first layer
   for(int th = 90; th<=270; th+=90){
     int roll = th;
-    int pitch = 235;
+    int pitch = 230;
     double z_shift = original_r * (sin(RADIANS(pitch-180)) - sin(RADIANS(first_pitch-180)));
     double r = original_r * cos(RADIANS(pitch-180));
     RTC::Pose3D pose;
@@ -509,6 +509,22 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
 
   //second layer
   for(int th = 60; th<=300; th+=60){
+    int roll = 360 - th;
+    int pitch= 220;
+    double r = original_r * cos(RADIANS(pitch-180));
+    double z_shift = original_r * (sin(RADIANS(pitch-180)) - sin(RADIANS(first_pitch-180)));
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (x_offset + r * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset + r * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    poses.push_back(pose);
+  }
+
+  //third layer
+  for(int th = 45; th<=315; th+=45){
     int roll = th;
     int pitch= 210;
     double r = original_r * cos(RADIANS(pitch-180));
@@ -523,10 +539,10 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
     poses.push_back(pose);
   }
 
-  //third layer
+  //fourth layer
   for(int th = 36; th<=324; th+=36){
-    int roll = th;
-    int pitch= 195;
+    int roll = 360 - th;
+    int pitch= 200;
     double r = original_r * cos(RADIANS(pitch-180));
     double z_shift = original_r * (sin(RADIANS(pitch-180)) - sin(RADIANS(first_pitch-180)));
     RTC::Pose3D pose;
@@ -552,13 +568,13 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses2() {
 	double y_offset = 0;
 	double z_offset = 22;
   double original_r = 8;
-  double first_pitch = 125;
+  double first_pitch = 130;
 
   //first layer
   for(int th = 0; th<=360; th+=90){
     int roll = th;
     if (roll == 0) roll = 1;
-    int pitch= 125;
+    int pitch= 130;
     double z_shift = original_r * (sin(RADIANS(180-pitch)) - sin(RADIANS(180-first_pitch)));
     double r = original_r * cos(RADIANS(180-pitch));
     RTC::Pose3D pose;
@@ -573,6 +589,23 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses2() {
 
   //second layer
   for(int th = 0; th<=360; th+=60){
+    int roll = 360 - th;
+    if (roll == 0) roll = 1;
+    int pitch= 140;
+    double z_shift = original_r * (sin(RADIANS(180-pitch)) - sin(RADIANS(180-first_pitch)));
+    double r = original_r * cos(RADIANS(180-pitch));
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - z_shift                  + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    poses.push_back(pose);
+  }
+
+  //third layer
+  for(int th = 0; th<=360; th+=45){
     int roll = th;
     if (roll == 0) roll = 1;
     int pitch= 150;
@@ -588,11 +621,11 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses2() {
     poses.push_back(pose);
   }
 
-  //third layer
+  //fourth layer
   for(int th = 0; th<=360; th+=36){
-    int roll = th;
+    int roll = 360 - th;
     if (roll == 0) roll = 1;
-    int pitch= 165;
+    int pitch= 160;
     double z_shift = original_r * (sin(RADIANS(180-pitch)) - sin(RADIANS(180-first_pitch)));
     double r = original_r * cos(RADIANS(180-pitch));
     RTC::Pose3D pose;
