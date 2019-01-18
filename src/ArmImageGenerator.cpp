@@ -10,7 +10,8 @@
 #include "ArmImageGenerator.h"
 
 #include <iomanip>
-//#include <fstream>
+#include <iostream>
+#include <fstream>
 #include <ctime>
 
 
@@ -471,7 +472,7 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   return true;
 }
 
-std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
+std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
   m_BehaviorLog << "generatePoses()" << std::endl;
   std::vector<RTC::Pose3D> poses;
 
@@ -502,20 +503,6 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
     pose.orientation.y = M_PI + atan(sin(RADIANS(roll/2))*tan(RADIANS(pitch-180)));
     poses.push_back(pose);
   }
-  for(int th = 0; th<=360; th+=90){
-    int roll = th;
-    if (roll == 0) roll = 1;
-    int pitch= 125;
-    double r = 4.59;
-    RTC::Pose3D pose;
-    pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset                          + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-    pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-    poses.push_back(pose);
-  }
 
   //second layer
   for(int th = 60; th<=300; th+=60){
@@ -526,20 +513,6 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
     pose.position.x = 0.01 * (x_offset + 6.13 * sin(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
     pose.position.y = 0.01 * (y_offset + 6.13 * cos(RADIANS(roll/2)) - lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
     pose.position.z = 0.01 * (z_offset - 1.55                       + lenWristToCam * cos(RADIANS((pitch-180)/2)));
-    pose.orientation.r = RADIANS(roll);
-    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
-    poses.push_back(pose);
-  }
-  for(int th = 0; th<=360; th+=60){
-    int roll = th;
-    if (roll == 0) roll = 1;
-    int pitch= 150;
-    double r = 8.66;
-    RTC::Pose3D pose;
-    pose.position.x = 0.01 * (x_offset - 6.13 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
-    pose.position.y = 0.01 * (y_offset - 6.13 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
-    pose.position.z = 0.01 * (z_offset - 1.55                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
     pose.orientation.r = RADIANS(roll);
     pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
@@ -560,6 +533,53 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
     pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
     poses.push_back(pose);
   }
+
+  m_BehaviorLog << "generatePoses() (first half) ended." << std::endl;
+  return poses;
+}
+
+std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses2() {
+  m_BehaviorLog << "generatePoses()" << std::endl;
+  std::vector<RTC::Pose3D> poses;
+
+  double lenWristToCam = 11;  //座標位置からカメラ位置までの距離(cm)
+	double x_offset = 27;
+	double y_offset = 0;
+	double z_offset = 22;
+
+  //first layer
+  for(int th = 0; th<=360; th+=90){
+    int roll = th;
+    if (roll == 0) roll = 1;
+    int pitch= 125;
+    double r = 4.59;
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (x_offset - r * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - r * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset                          + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    poses.push_back(pose);
+  }
+
+  //second layer
+  for(int th = 0; th<=360; th+=60){
+    int roll = th;
+    if (roll == 0) roll = 1;
+    int pitch= 150;
+    double r = 8.66;
+    RTC::Pose3D pose;
+    pose.position.x = 0.01 * (x_offset - 6.13 * sin(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * sin(RADIANS(roll/2)));
+    pose.position.y = 0.01 * (y_offset - 6.13 * cos(RADIANS(roll/2)) + lenWristToCam * sin(RADIANS((pitch-180)/2)) * cos(RADIANS(roll/2)));
+    pose.position.z = 0.01 * (z_offset - 1.55                        + lenWristToCam * cos(RADIANS((pitch-180)/2)));
+    pose.orientation.r = RADIANS(roll);
+    pose.orientation.p = M_PI - atan(cos(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    pose.orientation.y = M_PI - atan(sin(RADIANS(roll / 2))*tan(RADIANS(180-pitch)));
+    poses.push_back(pose);
+  }
+
+  //third layer
   for(int th = 0; th<=360; th+=36){
     int roll = th;
     if (roll == 0) roll = 1;
@@ -575,7 +595,7 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses() {
     poses.push_back(pose);
   }
 
-  m_BehaviorLog << "generatePoses() ended." << std::endl;
+  m_BehaviorLog << "generatePoses() (second half) ended." << std::endl;
   return poses;
 }
 
@@ -646,35 +666,102 @@ RTC::ReturnCode_t ArmImageGenerator::moveJointAbs(const std::vector<double> join
   return RTC::RTC_OK;
 }
 
+bool checkDirCreatable(std::string dirName){
+  if (_mkdir (dirName.c_str()) == 0){
+    return true;
+  } else {
+    return false;
+  }
+}
 
 RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
+  coil::TimeValue tv(0.25);
   m_BehaviorLog << "onMoveAutomatic()" << std::endl;
 
   // ここで目標位置姿勢をリストにして受け取る
-  std::vector<RTC::Pose3D> poseArray = generatePoses();
+  std::cout << "Generate poses" << std::endl;
+  std::vector<RTC::Pose3D> poseArray1 = generatePoses1();
+  std::vector<RTC::Pose3D> poseArray2 = generatePoses2();
+
+  //保存先のディレクトリのパスを設定する
+  std::string dirName = "";
+  for(int i=0; i<1000; i++){
+    dirName = m_logDir + "/scene_" + std::to_string(i);
+    if (checkDirCreatable(dirName))
+      break;
+  }
+
+  //保存先にサブディレクトリ生成
+  _mkdir((dirName + "/images").c_str());
+  _mkdir((dirName + "/viewpoints").c_str());
+
 
   // ここで繰り返し移動して撮影する
   int count = 0;
-  for (auto pose : poseArray) {
+  // 前半を撮影する
+  std::cout << "Move : First half" << std::endl;
+  for (auto pose : poseArray1) {
+    // 座標移動
     moveAbsWithPose3D(pose);
 
+    //関節移動
     std::vector<double> joints;
     getJointAbs(joints);
-    double roll = (pose.orientation.r - M_PI) * 0.5;
-    if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
+    double roll = (pose.orientation.r - M_PI) * 0.5; //if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
     joints[5] = roll;
     moveJointAbs(joints);
 
+    //誤差修正
     fixPosError(pose);
 
+    coil::sleep(tv);
+    //画像保存
+    saveImage(dirName + "/images/image_" + std::to_string(count) + ".png");
+    //位置保存
+    saveViewpoint(pose, dirName + "/viewpoints/viewpoint_" + std::to_string(count) + ".csv");
+
     saveLog(count++, pose);
+    coil::sleep(tv);
+  }
+
+
+  //ユーザー対話
+  std::cout << "Switch camera position" << std::ends;
+  std::cout << "Enter any key when ready" << std::ends;
+  char c;
+  std::cin >> c;
+
+  // 後半を撮影する
+  for (auto pose : poseArray2) {
+    // 座標移動
+    moveAbsWithPose3D(pose);
+
+    //関節移動
+    std::vector<double> joints;
+    getJointAbs(joints);
+    double roll = (pose.orientation.r - M_PI) * 0.5; //if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
+    joints[5] = roll;
+    moveJointAbs(joints);
+
+    //誤差修正
+    fixPosError(pose);
+
+
+    coil::sleep(tv);
+    //画像保存
+    saveImage(dirName + "/images/image_" + std::to_string(count) + ".jpg");
+    //位置保存
+    saveViewpoint(pose, dirName + "/viewpoints/viewpoint_" + std::to_string(count) + ".csv");
+
+    saveLog(count++, pose);
+    coil::sleep(tv);
   }
 
   m_BehaviorLog << "onMoveAutomatic() ended." << std::endl;
   return RTC::RTC_OK;
 }
 
-void ArmImageGenerator::saveImage(){
+void ArmImageGenerator::saveImage(std::string savePath){
   /// Capture Image and Save
   bool imageArrived = false;
 
@@ -695,12 +782,10 @@ void ArmImageGenerator::saveImage(){
 
   if (channels == 3)
 	  m_buffer.create(height, width, CV_8UC3);
-
   else
 	  m_buffer.create(height, width, CV_8UC1);
 
   long data_length = m_rgbCameraImage0.data.image.raw_data.length();
-
 
   if (m_rgbCameraImage0.data.image.format == Img::CF_RGB || m_rgbCameraImage0.data.image.format == Img::CF_GRAY) {
 	  for (int i = 0; i < height; ++i)
@@ -723,9 +808,30 @@ void ArmImageGenerator::saveImage(){
 		  m_buffer = decoded_image;
 	  }
   }
-  cv::imwrite(m_logDir + "/test_image_1.png", m_buffer);
+  cv::imwrite(savePath, m_buffer);
 
-  std::cout << "saved image to : " << m_logDir << "/test_image_1.png" << std::endl;
+  std::cout << "saved image to : " << savePath << std::endl;
+}
+
+void ArmImageGenerator::saveViewpoint(RTC::Pose3D pose, std::string savePath){
+	double x_offset = 27;
+	double y_offset = 0;
+	double z_offset = 22;
+
+  double xFromCenter = pose.position.x - x_offset;
+  double yFromCenter = pose.position.y - y_offset;
+  double zFromCenter = pose.position.z - z_offset;
+
+  double envYaw = pose.orientation.r;
+  double envPitch = pose.orientation.p;
+
+  std::ofstream outputfile(savePath);
+  outputfile << xFromCenter << ","
+              << yFromCenter << ","
+              << zFromCenter << ","
+              << envYaw      << ","
+              << envPitch;
+  outputfile.close();
 }
 
 void ArmImageGenerator::saveLog(int count, const RTC::Pose3D& targetPose) {
@@ -793,10 +899,12 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     std::cout << "moveAutomatic" << std::endl;
     return onMoveAutomatic();
     break;
+
   case '0':
     std::cout << "reset" << std::endl;
     moveOrigin();
     break;
+
   case 'l':
     std::cout << "getFeedbackPosCartesian" << std::endl;
 #ifndef NO_ARM_CONNECTION
@@ -806,100 +914,118 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     printf("        %4.4f %4.4f %4.4f %4.4f\n", pos->carPos[2][0], pos->carPos[2][1], pos->carPos[2][2], pos->carPos[2][3]);
 #endif
     break;
+
   case 'o':
     std::cout << "servoON" << std::endl;
 #ifndef NO_ARM_CONNECTION
     m_manipCommon->servoON();
 #endif
     break;
+
   case 'i':
     std::cout << "servoOFF" << std::endl;
 #ifndef NO_ARM_CONNECTION
     m_manipCommon->servoOFF();
 #endif
     break;
+
   case 'f':
     std::cout << "move right" << std::endl;
     if (moveTranslate(0, -0.01*n, 0)) return RTC::RTC_ERROR;
     break;
+
   case 's':
     std::cout << "move left" << std::endl;
     if (moveTranslate(0, 0.01*n, 0)) return RTC::RTC_ERROR;
     break;
+
   case 'e':
     std::cout << "move forward" << std::endl;
     if (moveTranslate(0.01*n, 0, 0)) return RTC::RTC_ERROR;
     break;
+
   case 'c':
     std::cout << "move backward" << std::endl;
     if (moveTranslate(-0.01*n, 0, 0)) return RTC::RTC_ERROR;
     break;
+
   case 'w':
     std::cout << "Up" << std::endl;
     if (moveTranslate(0, 0, 0.01*n)) return RTC::RTC_ERROR;
     break;
+
   case 'r':
     std::cout << "Down" << std::endl;
     if (moveTranslate(0, 0, -0.01*n)) return RTC::RTC_ERROR;
     break;
+
   case 'x':
     std::cout << "rotateCW" << std::endl;
     if (rotateZ(RADIANS(n))) return RTC::RTC_ERROR;
     break;
+
   case 'v':
     std::cout << "rotateCCW" << std::endl;
     if (rotateZ(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
+
   case 'y':
     std::cout << "Close Gripper" << std::endl;
     m_manipMiddle->closeGripper();
     break;
+
   case 'n':
     std::cout << "Open Gripper" << std::endl;
     m_manipMiddle->openGripper();
     break;
+
   case 'p':
     m_manipMiddle->setSpeedCartesian(10);
     break;
+
   case ';':
     m_manipMiddle->setSpeedCartesian(50);
     break;
+
   case 'j':
     std::cout << "rotateJ" << std::endl;
     if (rotateY(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
+
   case 'k':
     std::cout << "inverseJ" << std::endl;
     if (rotateY(RADIANS(n))) return RTC::RTC_ERROR;
     break;
+
   case ',':
     std::cout << "rotate," << std::endl;
     if (rotateX(RADIANS(-n))) return RTC::RTC_ERROR;
     break;
+
   case '.':
     std::cout << "inverse," << std::endl;
     if (rotateX(RADIANS(n))) return RTC::RTC_ERROR;
     break;
+
   case 'z':
 	  std::cout << "get joint_pos" << std::endl;
-
 	  getJointAbs(joints);
-
 	  for (auto x: joints){
 		  std::cout << x << std::endl;
 	  }
 	  break;
+
   case '1':
 	  std::cout << "move by joint_pos" << std::endl;
-
 	  getJointAbs(joints);
 	  joints[5] = RADIANS(n);
 	  moveJointAbs(joints);
+	  break;
 
-	  break;
   case '2':
-	  saveImage();
+	  saveImage("./test_image.png");
 	  break;
+
   default:
     printf("Unknown Command %c\n", c);
     break;

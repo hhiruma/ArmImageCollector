@@ -314,7 +314,7 @@ class ArmImageGenerator
   float m_initial_jointPos3;
   float m_initial_jointPos4;
   float m_initial_jointPos5;
-  
+
   // </rtc-template>
 
   // DataInPort declaration
@@ -332,7 +332,7 @@ class ArmImageGenerator
 
   // DataOutPort declaration
   // <rtc-template block="outport_declare">
-  
+
   // </rtc-template>
 
   // CORBA Port declaration
@@ -343,12 +343,12 @@ class ArmImageGenerator
   /*!
    */
   RTC::CorbaPort m_manipMiddlePort;
-  
+
   // </rtc-template>
 
   // Service declaration
   // <rtc-template block="service_declare">
-  
+
   // </rtc-template>
 
   // Consumer declaration
@@ -359,18 +359,18 @@ class ArmImageGenerator
   /*!
    */
   RTC::CorbaConsumer<JARA_ARM::ManipulatorCommonInterface_Middle> m_manipMiddle;
-  
+
   // </rtc-template>
 
  private:
   // <rtc-template block="private_attribute">
-  
+
   // </rtc-template>
 
   // <rtc-template block="private_operation">
-  
+
   // </rtc-template>
-  
+
   	 JARA_ARM::JointPos_var m_jointPos;
 	 int m_j0counter;
 	 int m_j1counter;
@@ -384,7 +384,7 @@ class ArmImageGenerator
   	 std::ofstream m_DepthLog;
 
   std::ofstream m_BehaviorLog;
-  
+
 	 std::string m_logDir;
 
   // float  m_depth; not used
@@ -400,7 +400,8 @@ class ArmImageGenerator
 
   RTC::ReturnCode_t onMoveAutomatic();
   bool moveAbsWithPose3D(const RTC::Pose3D& pose);
-  std::vector<RTC::Pose3D> generatePoses();
+  std::vector<RTC::Pose3D> generatePoses1();
+  std::vector<RTC::Pose3D> generatePoses2();
   void saveLog(int count, const RTC::Pose3D& targetPose);
 
   /*
@@ -410,7 +411,7 @@ class ArmImageGenerator
    * @return RTC_OKで成功．失敗時はjointsの内容は不定
    */
   RTC::ReturnCode_t getJointAbs(std::vector<double>& joints);
-  
+
   /**
    * 関節角度制御
    *
@@ -427,7 +428,8 @@ class ArmImageGenerator
    */
   bool fixPosError(const RTC::Pose3D pose);
 
-  void saveImage();
+  void saveImage(std::string savePath);
+  void saveViewpoint(RTC::Pose3D pose, std::string savePath);
 };
 
 
