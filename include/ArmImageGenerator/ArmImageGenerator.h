@@ -319,11 +319,14 @@ class ArmImageGenerator
 
   // DataInPort declaration
   // <rtc-template block="inport_declare">
-  RGBDCamera::TimedRGBDCameraImage m_rgbdCameraImage;
+  //RGBDCamera::TimedRGBDCameraImage m_rgbdCameraImage;
+  Img::TimedCameraImage m_rgbCameraImage0;
+  Img::TimedCameraImage m_rgbCameraImage1;
   /*!
    */
-  InPort<RGBDCamera::TimedRGBDCameraImage> m_rgbdCameraImageIn;
-  
+  //InPort<RGBDCamera::TimedRGBDCameraImage> m_rgbdCameraImageIn;
+  InPort<Img::TimedCameraImage> m_rgbCameraImageIn0;
+  InPort<Img::TimedCameraImage> m_rgbCameraImageIn1;
   // </rtc-template>
 
 
