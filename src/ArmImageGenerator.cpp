@@ -394,10 +394,14 @@ bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
   m_BehaviorLog << "moveTranslate(" << dx << ", " << dy << ", " << dz << ")" << std::endl;
   JARA_ARM::CarPosWithElbow targetPos;
   targetPos.elbow = 0;
-  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = dx;
-  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = dy;
-  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = dz;
-  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  //targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = dx;
+  //targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = dy;
+  //targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = dz;
+  targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] =  0; targetPos.carPos[0][3] = dx;
+  targetPos.carPos[1][0] =  0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] =  0; targetPos.carPos[1][3] = dy;
+  targetPos.carPos[2][0] =  0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = dz;
+  //JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
   if (ret->id != JARA_ARM::OK) {
     std::cout << "ERROR in ServoON" << std::endl;
     std::cout << " ERRORCODE    :" << ret->id << std::endl;
@@ -406,6 +410,53 @@ bool ArmImageGenerator::moveTranslate(double dx, double dy, double dz) {
   }
   return false;
 }
+
+JARA_ARM::CarPosWithElbow matrixProduct(JARA_ARM::CarPosWithElbow* T1, JARA_ARM::CarPosWithElbow* T2){
+  double T1_m[4][4];
+  double T2_m[4][4];
+  double ans_m[4][4];
+
+  printf("T1     : %4.4f %4.4f %4.4f %4.4f\n", T1->carPos[0][0], T1->carPos[0][1], T1->carPos[0][2], T1->carPos[0][3]);
+  printf("         %4.4f %4.4f %4.4f %4.4f\n", T1->carPos[1][0], T1->carPos[1][1], T1->carPos[1][2], T1->carPos[1][3]);
+  printf("         %4.4f %4.4f %4.4f %4.4f\n", T1->carPos[2][0], T1->carPos[2][1], T1->carPos[2][2], T1->carPos[2][3]);
+
+  for (int i=0; i<4; i++){
+    if (i < 3) {
+      for (int j=0; j<4; j++){
+        T1_m[i][j] = T1->carPos[i][j];
+        T2_m[i][j] = T2->carPos[i][j];
+      }
+    } else {
+      for (int j=0; j<4; j++){
+        T1_m[i][j] = 0;
+        T2_m[i][j] = 0;
+      }
+    }
+  }
+
+  for (int i=0; i<4; i++){
+    for (int j=0; j<4; j++){
+      double sum = 0;
+      for (int k=0; k<4; k++){
+        sum += T1_m[i][k] * T1_m[k][j];
+      }
+      ans_m[i][j] = sum;
+    }
+  }
+
+  JARA_ARM::CarPosWithElbow product;
+  for (int i=0; i<3; i++){
+    for (int j=0; j<4; j++){
+      product.carPos[i][j] = ans_m[i][j];
+    }
+  }
+
+  printf("product: %4.4f %4.4f %4.4f %4.4f\n", product.carPos[0][0], product.carPos[0][1], product.carPos[0][2], product.carPos[0][3]);
+  printf("         %4.4f %4.4f %4.4f %4.4f\n", product.carPos[1][0], product.carPos[1][1], product.carPos[1][2], product.carPos[1][3]);
+  printf("         %4.4f %4.4f %4.4f %4.4f\n", product.carPos[2][0], product.carPos[2][1], product.carPos[2][2], product.carPos[2][3]);
+  return product;
+}
+
 
 bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   std::cout << "move abs with pose 3d" << std::endl;
@@ -422,36 +473,100 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   // moveCartesianAbs‚É‘—‚éD
 
   JARA_ARM::CarPosWithElbow targetPos;
+  JARA_ARM::CarPosWithElbow targetMove;
+  JARA_ARM::CarPosWithElbow tmp;
   targetPos.elbow = 0;
+  targetMove.elbow = 0;
+  tmp.elbow = 0;
 
+/*
   //translate position
-  targetPos.carPos[0][0] = -1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] =  0; targetPos.carPos[0][3] = poses.position.x;
-  targetPos.carPos[1][0] =  0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] =  0; targetPos.carPos[1][3] = poses.position.y;
-  targetPos.carPos[2][0] =  0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = -1; targetPos.carPos[2][3] = poses.position.z;
+  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = poses.position.x;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = poses.position.y;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = poses.position.z;
+  */
+  targetPos.carPos[0][0] = 1; targetPos.carPos[0][1] = 0; targetPos.carPos[0][2] = 0; targetPos.carPos[0][3] = 0;
+  targetPos.carPos[1][0] = 0; targetPos.carPos[1][1] = 1; targetPos.carPos[1][2] = 0; targetPos.carPos[1][3] = 0;
+  targetPos.carPos[2][0] = 0; targetPos.carPos[2][1] = 0; targetPos.carPos[2][2] = 1; targetPos.carPos[2][3] = 0;
 
   //rotate yaw
-
   double c_yaw = cos(poses.orientation.y);
   double s_yaw = sin(poses.orientation.y);
-  targetPos.carPos[0][0] += c_yaw; targetPos.carPos[0][1] += 0; targetPos.carPos[0][2] += -s_yaw;
-  targetPos.carPos[1][0] +=     0; targetPos.carPos[1][1] += 0; targetPos.carPos[1][2] +=      0;
-  targetPos.carPos[2][0] += s_yaw; targetPos.carPos[2][1] += 0; targetPos.carPos[2][2] +=  c_yaw;
+  targetMove.carPos[0][0] = c_yaw; targetMove.carPos[0][1] = 0; targetMove.carPos[0][2] = -s_yaw; targetMove.carPos[0][3] = 0;
+  targetMove.carPos[1][0] =     0; targetMove.carPos[1][1] = 1; targetMove.carPos[1][2] =      0; targetMove.carPos[1][3] = 0;
+  targetMove.carPos[2][0] = s_yaw; targetMove.carPos[2][1] = 0; targetMove.carPos[2][2] =  c_yaw; targetMove.carPos[2][3] = 0;
+  for (int i=0; i<3; i++){
+    for (int j=0; j<3; j++){
+      double sum = 0;
+      for (int k=0; k<3; k++){
+        sum += targetPos.carPos[i][k] * targetMove.carPos[k][j];
+      }
+      tmp.carPos[i][j] = sum;
+    }
+  }
+  for (int i=0; i<3; i++){
+    for (int j=0; j<3; j++){
+      targetPos.carPos[i][j] = tmp.carPos[i][j];
+    }
+  }
+  printf("targetPos %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[0][0], targetPos.carPos[0][1], targetPos.carPos[0][2], targetPos.carPos[0][3]);
+  printf("          %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[1][0], targetPos.carPos[1][1], targetPos.carPos[1][2], targetPos.carPos[1][3]);
+  printf("          %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[2][0], targetPos.carPos[2][1], targetPos.carPos[2][2], targetPos.carPos[2][3]);
+  //targetPos = tmp;
+
+  //targetPos = matrixProduct(&targetPos, &tmpTargetPos);
 
   //rotate pitch
   double c_pitch = cos(poses.orientation.p);
   double s_pitch = sin(poses.orientation.p);
-  targetPos.carPos[0][0] += 0; targetPos.carPos[0][1] +=       0; targetPos.carPos[0][2] +=        0;
-  targetPos.carPos[1][0] += 0; targetPos.carPos[1][1] += c_pitch; targetPos.carPos[1][2] += -s_pitch;
-  targetPos.carPos[2][0] += 0; targetPos.carPos[2][1] += s_pitch; targetPos.carPos[2][2] += -c_pitch;
+  targetMove.carPos[0][0] = 1; targetMove.carPos[0][1] =       0; targetMove.carPos[0][2] =        0; targetMove.carPos[0][3] = 0;
+  targetMove.carPos[1][0] = 0; targetMove.carPos[1][1] = c_pitch; targetMove.carPos[1][2] = -s_pitch; targetMove.carPos[1][3] = 0;
+  targetMove.carPos[2][0] = 0; targetMove.carPos[2][1] = s_pitch; targetMove.carPos[2][2] = -c_pitch; targetMove.carPos[2][3] = 0;
+  for (int i=0; i<3; i++){
+    for (int j=0; j<3; j++){
+      double sum = 0;
+      for (int k=0; k<3; k++){
+        sum += targetPos.carPos[i][k] * targetMove.carPos[k][j];
+      }
+      tmp.carPos[i][j] = sum;
+    }
+  }
+  for (int i=0; i<3; i++){
+    for (int j=0; j<3; j++){
+      targetPos.carPos[i][j] = tmp.carPos[i][j];
+    }
+  }
+  printf("targetPos %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[0][0], targetPos.carPos[0][1], targetPos.carPos[0][2], targetPos.carPos[0][3]);
+  printf("          %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[1][0], targetPos.carPos[1][1], targetPos.carPos[1][2], targetPos.carPos[1][3]);
+  printf("          %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[2][0], targetPos.carPos[2][1], targetPos.carPos[2][2], targetPos.carPos[2][3]);
+  //targetPos = tmp;
+  //targetPos = matrixProduct(&targetPos, &tmpTargetPos);
 
   //rotate roll
-  /*
   double c_roll = cos(poses.orientation.r);
   double s_roll = sin(poses.orientation.r);
-  targetPos.carPos[0][0] += c_roll; targetPos.carPos[0][1] += -s_roll; targetPos.carPos[0][2] += 0;
-  targetPos.carPos[1][0] += s_roll; targetPos.carPos[1][1] +=  c_roll; targetPos.carPos[1][2] += 0;
-  targetPos.carPos[2][0] +=      0; targetPos.carPos[2][1] +=       0; targetPos.carPos[2][2] += 0;
-  */
+  targetMove.carPos[0][0] = c_roll; targetMove.carPos[0][1] = -s_roll; targetMove.carPos[0][2] = 0; targetMove.carPos[0][3] = 0;
+  targetMove.carPos[1][0] = s_roll; targetMove.carPos[1][1] =  c_roll; targetMove.carPos[1][2] = 0; targetMove.carPos[1][3] = 0;
+  targetMove.carPos[2][0] =      0; targetMove.carPos[2][1] =       0; targetMove.carPos[2][2] = 1; targetMove.carPos[2][3] = 0;
+  for (int i=0; i<3; i++){
+    for (int j=0; j<3; j++){
+      double sum = 0;
+      for (int k=0; k<3; k++){
+        sum += targetPos.carPos[i][k] * targetMove.carPos[k][j];
+      }
+      tmp.carPos[i][j] = sum;
+    }
+  }
+  for (int i=0; i<3; i++){
+    for (int j=0; j<3; j++){
+      targetPos.carPos[i][j] = tmp.carPos[i][j];
+    }
+  }
+  printf("targetPos %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[0][0], targetPos.carPos[0][1], targetPos.carPos[0][2], targetPos.carPos[0][3]);
+  printf("          %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[1][0], targetPos.carPos[1][1], targetPos.carPos[1][2], targetPos.carPos[1][3]);
+  printf("          %4.4f %4.4f %4.4f %4.4f\n", targetPos.carPos[2][0], targetPos.carPos[2][1], targetPos.carPos[2][2], targetPos.carPos[2][3]);
+  //targetPos = tmp;
+  //targetPos = matrixProduct(&targetPos, &tmpTargetPos);
 
   printf("x: %f, ", poses.position.x);
   printf("y: %f, ", poses.position.y);
@@ -460,7 +575,8 @@ bool ArmImageGenerator::moveAbsWithPose3D(const RTC::Pose3D& poses) {
   printf("pitch: %f, ", poses.orientation.p / M_PI * 180);
   printf("roll: %f\n\n", poses.orientation.r / M_PI *180);
 
-  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
+  //JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianAbs(targetPos);
+  JARA_ARM::RETURN_ID_var ret = m_manipMiddle->movePTPCartesianRel(targetPos);
   if (ret->id != JARA_ARM::OK) {
 	  std::cout << "ERROR in ServoON" << std::endl;
 	  std::cout << " ERRORCODE    :" << ret->id << std::endl;
@@ -510,6 +626,8 @@ std::vector<RTC::Pose3D> ArmImageGenerator::generatePoses1() {
   //second layer
   for(int th = 60; th<=300; th+=60){
     int roll = 360 - th;
+    //if (roll == 300) roll = 320;
+    //if (roll == 240) roll = 315;
     int pitch= 220;
     double r = original_r * cos(RADIANS(pitch-180));
     double z_shift = original_r * (sin(RADIANS(pitch-180)) - sin(RADIANS(first_pitch-180)));
@@ -745,17 +863,19 @@ RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
   std::cout << "Move : First half" << std::endl;
   for (auto pose : poseArray1) {
     // À•WˆÚ“®
+    moveTranslate(pose.position.x, pose.position.y, pose.position.z);
+    // ŠÖßˆÚ“®
     moveAbsWithPose3D(pose);
 
     //ŠÖßˆÚ“®
-    std::vector<double> joints;
-    getJointAbs(joints);
-    double roll = (pose.orientation.r - M_PI) * 0.5; //if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
-    joints[5] = roll;
-    moveJointAbs(joints);
+    //std::vector<double> joints;
+    //getJointAbs(joints);
+    //double roll = (pose.orientation.r - M_PI) * 0.5; //if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
+    //joints[5] = roll;
+    //moveJointAbs(joints);
 
     //Œë·C³
-    fixPosError(pose);
+    //fixPosError(pose);
 
     coil::sleep(tv);
     //‰æ‘œ•Û‘¶
@@ -776,18 +896,21 @@ RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
 
   // Œã”¼‚ðŽB‰e‚·‚é
   for (auto pose : poseArray2) {
+
     // À•WˆÚ“®
+    moveTranslate(pose.position.x, pose.position.y, pose.position.z);
+    // ŠÖßˆÚ“®
     moveAbsWithPose3D(pose);
 
     //ŠÖßˆÚ“®
-    std::vector<double> joints;
-    getJointAbs(joints);
-    double roll = (pose.orientation.r - M_PI) * 0.5; //if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
-    joints[5] = roll;
-    moveJointAbs(joints);
+    //std::vector<double> joints;
+    //getJointAbs(joints);
+    //double roll = (pose.orientation.r - M_PI) * 0.5; //if (abs(roll) < RADIANS(1)) roll = RADIANS(1);
+    //joints[5] = roll;
+    //moveJointAbs(joints);
 
     //Œë·C³
-    fixPosError(pose);
+    //fixPosError(pose);
 
 
     coil::sleep(tv);
@@ -798,6 +921,7 @@ RTC::ReturnCode_t ArmImageGenerator::onMoveAutomatic() {
 
     saveLog(count++, pose);
     coil::sleep(tv);
+
   }
 
   m_BehaviorLog << "onMoveAutomatic() ended." << std::endl;
@@ -1027,7 +1151,7 @@ RTC::ReturnCode_t ArmImageGenerator::onExecute(RTC::UniqueId ec_id)
     break;
 
   case ';':
-    m_manipMiddle->setSpeedCartesian(50);
+    m_manipMiddle->setSpeedCartesian(200);
     break;
 
   case 'j':
